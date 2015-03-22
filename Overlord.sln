@@ -1,0 +1,45 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Overlord.Storage", "Overlord.Storage\Overlord.Storage.csproj", "{E39CAD72-F2A4-49B8-A029-755F4027BBCE}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{1B30991F-6F15-4973-B1D9-459AB5BC3E5B}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\packages.config = .nuget\packages.config
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Overlord.Testing", "Overlord.Testing\Overlord.Testing.csproj", "{93281A71-FB42-40B6-BDA2-DC9F40E94D74}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Overlord.Core", "Overlord.Core\Overlord.Core.csproj", "{08F5AF53-5A1D-4498-86F6-8D86C693011B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Overlord.Security", "Overlord.Security\Overlord.Security.csproj", "{230B3558-078D-4821-B686-0F4455A477A0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E39CAD72-F2A4-49B8-A029-755F4027BBCE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E39CAD72-F2A4-49B8-A029-755F4027BBCE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E39CAD72-F2A4-49B8-A029-755F4027BBCE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E39CAD72-F2A4-49B8-A029-755F4027BBCE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93281A71-FB42-40B6-BDA2-DC9F40E94D74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93281A71-FB42-40B6-BDA2-DC9F40E94D74}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93281A71-FB42-40B6-BDA2-DC9F40E94D74}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93281A71-FB42-40B6-BDA2-DC9F40E94D74}.Release|Any CPU.Build.0 = Release|Any CPU
+		{08F5AF53-5A1D-4498-86F6-8D86C693011B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{08F5AF53-5A1D-4498-86F6-8D86C693011B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{08F5AF53-5A1D-4498-86F6-8D86C693011B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{08F5AF53-5A1D-4498-86F6-8D86C693011B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{230B3558-078D-4821-B686-0F4455A477A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{230B3558-078D-4821-B686-0F4455A477A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{230B3558-078D-4821-B686-0F4455A477A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{230B3558-078D-4821-B686-0F4455A477A0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
