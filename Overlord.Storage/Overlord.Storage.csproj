@@ -94,7 +94,11 @@
     <Compile Include="DeviceStorage.cs" />
     <Compile Include="GuidExtensions.cs" />
     <Compile Include="IStorage.cs" />
+    <Compile Include="IStorageAlert.cs" />
+    <Compile Include="IStorageChannel.cs" />
     <Compile Include="IStorageDevice.cs" />
+    <Compile Include="IStorageMessage.cs" />
+    <Compile Include="IStorageSensor.cs" />
     <Compile Include="IStorageUser.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StringExtensions.cs" />

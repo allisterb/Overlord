@@ -6,13 +6,11 @@ using System.Threading.Tasks;
 
 namespace Overlord.Storage
 {
-    public class IStorageDevice
+    public class IStorageChannel
     {
         public Guid Id { get; set; }
-        public Guid UserId { get; set; }
-        public string Token { get; set; }
-        public string Version { get; set; }        
         public string Name { get; set; }
-        public Dictionary<string, IStorageSensor> Sensors { get; set; }
+        public string Description { get; set; }
+        public string Units { get; set; }
     }
 }

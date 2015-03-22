@@ -53,7 +53,13 @@ namespace Overlord.Storage
             event_log_listener.EnableEvents(Log, EventLevel.LogAlways,
               AzureStorageEventSource.Keywords.Perf | AzureStorageEventSource.Keywords.Diagnostic);
             var formatter = new EventTextFormatter() { VerbosityThreshold = EventLevel.Error };
-            event_log_listener.LogToConsole(formatter);            
+            event_log_listener.LogToConsole(formatter);
+
+            device_entity_resolver = (string partitionKey, string rowKey,
+                DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) =>
+                {
+                    return DeviceEntityResolver(partitionKey, rowKey, timestamp, properties, etag);
+                };
  
         }
         #endregion
@@ -195,21 +201,15 @@ namespace Overlord.Storage
         DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) =>
         {
             IStorageUser user = new IStorageUser();
-            user.Id = Guid.ParseExact(partitionKey, "X16");
+            user.Id = Guid.ParseExact(partitionKey, "D");
             user.Token = rowKey;
             user.Version = etag;
-            user.Devices = (IDictionary<string, IStorageDevice>)
-                from p in properties
-                where p.Key.StartsWith("Device_")
-                select new IStorageDevice()
-                {
-                    Id = Guid.ParseExact(p.Key.Substring(p.Key.IndexOf("Device_")), "X16")
-                };
+            user.Devices = JsonConvert.DeserializeObject<IDictionary<string, IStorageDevice>>(properties["Devices"].StringValue);             
             return user;
         };
 
-        internal EntityResolver<IStorageDevice> DeviceEntityResolver = (string partitionKey, string rowKey,
-        DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) =>
+        internal IStorageDevice DeviceEntityResolver(string partitionKey, string rowKey,
+        DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) 
         {
             IStorageDevice device = new IStorageDevice();
             device.Id = Guid.ParseExact(partitionKey, "X16");
@@ -219,7 +219,7 @@ namespace Overlord.Storage
             {
                 device.UserId = properties["UserId"].GuidValue.Value;
             }
-//            user.Devices = (IDictionary<string, IStorageDevice>)
+            //device.Sensors = Json(IDictionary<string, IStorageDevice>)
 //                from p in properties
 //                where p.Key.StartsWith("Device_")
 //                select new IStorageDevice()
@@ -227,7 +227,10 @@ namespace Overlord.Storage
 //                    Id = Guid.ParseExact(p.Key.Substring(p.Key.IndexOf("Device_")), "X16")
 //                };
             return device;
-        };
+        }
+
+        internal EntityResolver<IStorageDevice> device_entity_resolver;
+
 
         #endregion
 
@@ -275,7 +278,8 @@ namespace Overlord.Storage
                 {
                     return null;
                 }
-                IStorageUser user = new IStorageUser();
+                IStorageUser user = this.UserEntityResolver(user_entity.PartitionKey, user_entity.RowKey, user_entity.Timestamp, user_entity.Properties,
+                    user_entity.ETag);
                 user.Id = Guid.ParseExact(user_entity.PartitionKey, "D");
                 user.Token = user_entity.RowKey;
                 user.Version = user_entity.ETag;
@@ -353,13 +357,15 @@ namespace Overlord.Storage
 
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.AddDevice)]
         public IStorageDevice AddDevice(IStorageUser user, string name, string token, GeoIp geoip)
-        {
+        {            
             IStorageDevice device = new IStorageDevice()
             {
                 Id = Guid.NewGuid(),
                 Token = token,
-                Name = name
-            };            
+                Name = name,
+                Sensors = new Dictionary<string, IStorageSensor>()
+            };
+            
             try
             {
                 TableOperation insert_device_operation = TableOperation.Insert(AzureStorage.CreateDeviceTableEntity(device));                
@@ -369,11 +375,6 @@ namespace Overlord.Storage
                 user.Devices.Add(device.Id.ToUrn(), device);                                
                 result = this.UsersTable.Execute(update_user_operation);
                 Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, Token {2} to Devices table.", device.Name, device.Id.ToUrn(), device.Token));
-                if (user.Devices == null)
-                {
-                    user.Devices = new Dictionary<string, IStorageDevice>();
-                }
-                
                 Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, Token {2} to user {3}.", 
                     device.Name, device.Id.ToUrn(), device.Token, user.Id.ToUrn()));
                 return device;
@@ -451,11 +452,15 @@ namespace Overlord.Storage
         {
             var dictionary = new Dictionary<string, EntityProperty>();
             dictionary.Add("Name", new EntityProperty(device.Name));
+            string sensors_json = JsonConvert.SerializeObject(device.Sensors);
+            dictionary.Add("Sensors", new EntityProperty(sensors_json));
+            /*
             if (device.Sensors != null && device.Sensors.Count > 0)
             {
-                foreach (var sensor in device.Sensors)
+                IDictionary<string, string> sensors = new Dictionary<string, string>();                
+                foreach (KeyValuePair<string, IStorageSensor> sensor in device.Sensors)
                 {
-                    var type = sensor.Value.GetType();
+                    string Id = sensor.Value.;
                     if (type == typeof(byte[]))
                     {
                         string json = JsonConvert.SerializeObject((byte[])sensor.Value);
@@ -493,10 +498,9 @@ namespace Overlord.Storage
                         string json = JsonConvert.SerializeObject((int)sensor.Value);
                         dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
                     }
-                }
-                
-            }
-
+                }                
+                 */ 
+            //}
             return new DynamicTableEntity(device.Id.ToUrn(), device.Token, device.Version, dictionary);
         }
 
