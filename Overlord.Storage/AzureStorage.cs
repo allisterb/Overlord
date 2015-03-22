@@ -208,6 +208,27 @@ namespace Overlord.Storage
             return user;
         };
 
+        internal EntityResolver<IStorageDevice> DeviceEntityResolver = (string partitionKey, string rowKey,
+        DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) =>
+        {
+            IStorageDevice device = new IStorageDevice();
+            device.Id = Guid.ParseExact(partitionKey, "X16");
+            device.Token = rowKey;
+            device.Version = etag;
+            if (properties.Keys.Contains("UserId"))
+            {
+                device.UserId = properties["UserId"].GuidValue.Value;
+            }
+//            user.Devices = (IDictionary<string, IStorageDevice>)
+//                from p in properties
+//                where p.Key.StartsWith("Device_")
+//                select new IStorageDevice()
+//                {
+//                    Id = Guid.ParseExact(p.Key.Substring(p.Key.IndexOf("Device_")), "X16")
+//                };
+            return device;
+        };
+
         #endregion
 
         #region Public methods        
@@ -304,7 +325,32 @@ namespace Overlord.Storage
                 OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.UpdateUser);
             }                                
         }
-        
+
+        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Administrator)]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.DeleteUser)]
+        public bool DeleteUser(IStorageUser user)
+        {
+            TableOperation delete_user_operation = TableOperation.Delete(CreateUserTableEntity(user));
+            try
+            {
+                TableResult result = this.UsersTable.Execute(delete_user_operation);
+                Log.WriteTableSuccess(string.Format("Deleted user: {0}, Id: {1}, Token: {2}",
+                    user.UserName, user.Id.ToUrn(), user.Token, user.Id.ToUrn()));
+                return true;
+            }
+            catch (Exception e)
+            {
+                Log.WriteTableFailure(string.Format("Failed to delete user: Id: {1}, Token: {2}.",
+                    user.Id.ToUrn(), user.Token), e);
+                throw;
+            }
+            finally
+            {
+                OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.DeleteUser);
+            }                                
+
+        }
+
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.AddDevice)]
         public IStorageDevice AddDevice(IStorageUser user, string name, string token, GeoIp geoip)
         {
@@ -317,16 +363,17 @@ namespace Overlord.Storage
             try
             {
                 TableOperation insert_device_operation = TableOperation.Insert(AzureStorage.CreateDeviceTableEntity(device));                
+                TableOperation update_user_operation = TableOperation.Merge(CreateUserTableEntity(user));
                 TableResult result;
                 result = this.DevicesTable.Execute(insert_device_operation);
+                user.Devices.Add(device.Id.ToUrn(), device);                                
+                result = this.UsersTable.Execute(update_user_operation);
                 Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, Token {2} to Devices table.", device.Name, device.Id.ToUrn(), device.Token));
                 if (user.Devices == null)
                 {
                     user.Devices = new Dictionary<string, IStorageDevice>();
                 }
-                user.Devices.Add(device.Id.ToUrn(), device);
-                TableOperation update_user_operation = TableOperation.Merge(CreateUserTableEntity(user));
-                result = this.UsersTable.Execute(update_user_operation);
+                
                 Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, Token {2} to user {3}.", 
                     device.Name, device.Id.ToUrn(), device.Token, user.Id.ToUrn()));
                 return device;
@@ -342,7 +389,8 @@ namespace Overlord.Storage
                 OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddDevice);
             }
         }
-        
+
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.FindDevice)]
         public IStorageDevice FindDevice(Guid id, string token)
         {
             TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(id.ToUrn(), token);

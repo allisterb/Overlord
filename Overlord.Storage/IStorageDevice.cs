@@ -9,8 +9,9 @@ namespace Overlord.Storage
     public class IStorageDevice
     {
         public Guid Id { get; set; }
+        public Guid UserId { get; set; }
         public string Token { get; set; }
-        public string Version { get; set; }
+        public string Version { get; set; }        
         public string Name { get; set; }
         public Dictionary<string, object> Sensors { get; set; }
     }
