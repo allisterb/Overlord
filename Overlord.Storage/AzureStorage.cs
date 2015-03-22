@@ -196,36 +196,29 @@ namespace Overlord.Storage
         
         #endregion
 
-        #region Private methods
-        internal EntityResolver<IStorageUser> UserEntityResolver = (string partitionKey, string rowKey,
-        DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) =>
+        #region Internal methods
+        internal IStorageUser UserEntityResolver (string partitionKey, string rowKey,
+        DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag)
         {
             IStorageUser user = new IStorageUser();
             user.Id = Guid.ParseExact(partitionKey, "D");
             user.Token = rowKey;
             user.Version = etag;
-            user.Devices = JsonConvert.DeserializeObject<IDictionary<string, IStorageDevice>>(properties["Devices"].StringValue);             
+            user.UserName = properties["UserName"].StringValue;
+            user.Devices = JsonConvert.DeserializeObject<IList<IStorageDevice>>(properties["Devices"].StringValue);             
             return user;
-        };
+        }
 
         internal IStorageDevice DeviceEntityResolver(string partitionKey, string rowKey,
         DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) 
         {
             IStorageDevice device = new IStorageDevice();
-            device.Id = Guid.ParseExact(partitionKey, "X16");
+            device.Id = Guid.ParseExact(partitionKey, "D");
             device.Token = rowKey;
             device.Version = etag;
-            if (properties.Keys.Contains("UserId"))
-            {
-                device.UserId = properties["UserId"].GuidValue.Value;
-            }
-            //device.Sensors = Json(IDictionary<string, IStorageDevice>)
-//                from p in properties
-//                where p.Key.StartsWith("Device_")
-//                select new IStorageDevice()
-//                {
-//                    Id = Guid.ParseExact(p.Key.Substring(p.Key.IndexOf("Device_")), "X16")
-//                };
+            device.Name = properties["Name"].StringValue;            
+            device.UserId = properties["UserId"].GuidValue.Value;            
+            device.Sensors = JsonConvert.DeserializeObject<IDictionary<string, IStorageSensor>>(properties["Sensors"].StringValue);                
             return device;
         }
 
@@ -278,26 +271,17 @@ namespace Overlord.Storage
                 {
                     return null;
                 }
-                IStorageUser user = this.UserEntityResolver(user_entity.PartitionKey, user_entity.RowKey, user_entity.Timestamp, user_entity.Properties,
-                    user_entity.ETag);
-                user.Id = Guid.ParseExact(user_entity.PartitionKey, "D");
-                user.Token = user_entity.RowKey;
-                user.Version = user_entity.ETag;
-                EntityProperty name_property;
-                user_entity.Properties.TryGetValue("UserName", out name_property);
-                if (name_property == null)
-                {
-                    throw new NullReferenceException("Could not get UserName property.");
-                }
                 else
                 {
-                    user.UserName = name_property.StringValue;
+                    IStorageUser user = this.UserEntityResolver(user_entity.PartitionKey, user_entity.RowKey, user_entity.Timestamp, user_entity.Properties,
+                        user_entity.ETag);
+
+                    return user;
                 }
-                return user;
             }
             catch (Exception e)
             {
-                Log.ReadTableFailure(string.Format("Failed to read table for user: Id: {0}, Token: {1}.", id.ToUrn(), token), e);
+                Log.ReadTableFailure(string.Format("Failed to find user: Id: {0}, Token: {1}.", id.ToUrn(), token), e);
                 throw;
             }
             finally
@@ -361,21 +345,23 @@ namespace Overlord.Storage
             IStorageDevice device = new IStorageDevice()
             {
                 Id = Guid.NewGuid(),
+                UserId = user.Id,
                 Token = token,
                 Name = name,
                 Sensors = new Dictionary<string, IStorageSensor>()
             };
             
             try
-            {
-                TableOperation insert_device_operation = TableOperation.Insert(AzureStorage.CreateDeviceTableEntity(device));                
-                TableOperation update_user_operation = TableOperation.Merge(CreateUserTableEntity(user));
+            {                
+                TableOperation insert_device_operation = TableOperation.Insert(AzureStorage.CreateDeviceTableEntity(device));                                
                 TableResult result;
                 result = this.DevicesTable.Execute(insert_device_operation);
-                user.Devices.Add(device.Id.ToUrn(), device);                                
-                result = this.UsersTable.Execute(update_user_operation);
+                device.Version = result.Etag;
+                user.Devices.Add(device);
+                TableOperation update_user_operation = TableOperation.Merge(CreateUserTableEntity(user));
                 Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, Token {2} to Devices table.", device.Name, device.Id.ToUrn(), device.Token));
-                Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, Token {2} to user {3}.", 
+                result = this.UsersTable.Execute(update_user_operation);                
+                Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, to User entity {2}.", 
                     device.Name, device.Id.ToUrn(), device.Token, user.Id.ToUrn()));
                 return device;
 
@@ -401,21 +387,9 @@ namespace Overlord.Storage
                 if (device_entity == null)
                 {
                     return null;
-                }
-                IStorageDevice device = new IStorageDevice();
-                device.Id = device_entity.PartitionKey.ToGuid();
-                device.Token = device_entity.RowKey;
-                EntityProperty name_property;
-                device_entity.Properties.TryGetValue("Name", out name_property);
-                if (name_property == null)
-                {
-                    throw new NullReferenceException("Could not get Name property.");
-                }
-                else
-                {
-                    device.Name = name_property.StringValue;
-                }
-                return device;
+                }               
+                return this.DeviceEntityResolver(device_entity.PartitionKey, device_entity.RowKey, device_entity.Timestamp,
+                    device_entity.Properties, device_entity.ETag);
             }
             catch (Exception e)
             {
@@ -436,15 +410,8 @@ namespace Overlord.Storage
         {
             var dictionary = new Dictionary<string, EntityProperty>();
             dictionary.Add("UserName", new EntityProperty(user.UserName));
-            if (user.Devices != null && user.Devices.Count > 0)
-            {
-                foreach (var device in user.Devices)
-                {
-                    string json = JsonConvert.SerializeObject(device.Value);
-                    dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Device_{0}", device.Key).Replace("-", "_"), new EntityProperty(json));
-                }
-            }
-
+            dictionary.Add("Devices", new EntityProperty(JsonConvert.SerializeObject(user.Devices)));
+          
             return new DynamicTableEntity(user.Id.ToUrn(), user.Token, user.Version, dictionary);
         }
 
@@ -452,6 +419,7 @@ namespace Overlord.Storage
         {
             var dictionary = new Dictionary<string, EntityProperty>();
             dictionary.Add("Name", new EntityProperty(device.Name));
+            dictionary.Add("UserId", new EntityProperty(device.UserId));
             string sensors_json = JsonConvert.SerializeObject(device.Sensors);
             dictionary.Add("Sensors", new EntityProperty(sensors_json));
             /*

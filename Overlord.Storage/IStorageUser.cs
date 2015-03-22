@@ -17,7 +17,7 @@ namespace Overlord.Storage
         public string LastName { get; set; }
         public string Email { get; set; }
         public  byte[] SerializedGeoIp { get; set; }
-        public IDictionary<string, IStorageDevice> Devices { get; set; }
+        public IList<IStorageDevice> Devices { get; set; }
 
         #endregion
     }

@@ -33,6 +33,7 @@ namespace Overlord.Testing
         {
             Guid g = user_01_id.UrnToGuid();
             Assert.Equal(Guid.ParseExact("d155074f-4e85-4cb5-a597-8bfecb0dfc04", "D"), g);
+            Assert.Equal("urn:uuid:d155074f-4e85-4cb5-a597-8bfecb0dfc04".UrnToGuid(), Guid.ParseExact("d155074f-4e85-4cb5-a597-8bfecb0dfc04", "D"));
         }
         
         [Fact]
@@ -52,7 +53,7 @@ namespace Overlord.Testing
         [Fact]
         public void CanAddUser()
         {
-            OverlordIdentity.InitAdminUser("d155074f-4e85-4cb5-a597-8bfecb0dfc04", "admin");
+            OverlordIdentity.InitAdminUser(user_01_id, "admin");
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddUser);
             AzureStorage storage = new AzureStorage();
             IStorageUser user = storage.AddUser("XUnit_CanAddUser_Test_Name", "XUnit_CanAddUser_Test_Token", null);
@@ -74,7 +75,7 @@ namespace Overlord.Testing
             AzureStorage storage = new AzureStorage();
             //OverlordIdentity.InitUser("ff", "ff");
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
-            IStorageUser user = storage.FindUser("d155074f-4e85-4cb5-a597-8bfecb0dfc04".ToGuid(), "admin");
+            IStorageUser user = storage.FindUser(user_01_id.UrnToGuid(), "admin");
             Assert.NotNull(user);
             Assert.Equal(user.UserName, "admin");            
         }
@@ -94,7 +95,7 @@ namespace Overlord.Testing
             AzureStorage storage = new AzureStorage();
             
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
-            IStorageUser user = storage.FindUser("d155074f-4e85-4cb5-a597-8bfecb0dfc04".ToGuid(), "admin");
+            IStorageUser user = storage.FindUser(user_01_id.UrnToGuid(), "admin");
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDevice);
             IStorageDevice device = storage.AddDevice(user, "XUnit_CanAddDevice_Test_Name", "XUnit_CanAddDevice_Test_Token", null);
             Assert.NotNull(device.Id);
@@ -109,10 +110,13 @@ namespace Overlord.Testing
             AzureStorage storage = new AzureStorage();
             OverlordIdentity.InitUser("ff", "ff");
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
-            IStorageUser user = storage.FindUser("d155074f-4e85-4cb5-a597-8bfecb0dfc04".ToGuid(), "admin");
+            IStorageUser user = storage.FindUser(user_01_id.UrnToGuid(), "admin");
+            Assert.NotNull(user);
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
             IStorageDevice device = storage.FindDevice(device_01_id.UrnToGuid(), "XUnit_CanFindDevice_Test_Token");            
-            Assert.NotNull(device);                        
+            Assert.NotNull(device);
+            Assert.Contains(device, user.Devices, new IStorageDeviceEq());
+
         }
 
     }

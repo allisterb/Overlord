@@ -13,6 +13,26 @@ namespace Overlord.Storage
         public string Token { get; set; }
         public string Version { get; set; }        
         public string Name { get; set; }
-        public Dictionary<string, IStorageSensor> Sensors { get; set; }
+        public IDictionary<string, IStorageSensor> Sensors { get; set; }
+    }
+
+    public class IStorageDeviceEq : IEqualityComparer<IStorageDevice>
+    {
+        public bool Equals(IStorageDevice d1, IStorageDevice d2)
+        {
+            if ((d1.Id == d2.Id) && (d1.Version == d2.Version))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public int GetHashCode(IStorageDevice d)
+        {            
+            return d.Id.GetHashCode();
+        }
     }
 }

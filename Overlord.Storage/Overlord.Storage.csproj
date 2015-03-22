@@ -93,6 +93,7 @@
     <Compile Include="DeviceReadingStorage.cs" />
     <Compile Include="DeviceStorage.cs" />
     <Compile Include="GuidExtensions.cs" />
+    <Compile Include="IListExtensions.cs" />
     <Compile Include="IStorage.cs" />
     <Compile Include="IStorageAlert.cs" />
     <Compile Include="IStorageChannel.cs" />
