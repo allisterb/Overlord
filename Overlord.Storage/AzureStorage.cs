@@ -54,7 +54,11 @@ namespace Overlord.Storage
               AzureStorageEventSource.Keywords.Perf | AzureStorageEventSource.Keywords.Diagnostic);
             var formatter = new EventTextFormatter() { VerbosityThreshold = EventLevel.Error };
             event_log_listener.LogToConsole(formatter);
-
+            this.UserEntityResolverFunc = (string partitionKey, string rowKey, DateTimeOffset timestamp, 
+                IDictionary<string, EntityProperty> properties, string etag) =>
+                {
+                    return UserEntityResolver(partitionKey, rowKey, timestamp, properties, etag);
+                };
             device_entity_resolver = (string partitionKey, string rowKey,
                 DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) =>
                 {
@@ -209,6 +213,8 @@ namespace Overlord.Storage
             return user;
         }
 
+        internal EntityResolver<IStorageUser> UserEntityResolverFunc;
+
         internal IStorageDevice DeviceEntityResolver(string partitionKey, string rowKey,
         DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) 
         {
@@ -227,7 +233,84 @@ namespace Overlord.Storage
 
         #endregion
 
-        #region Public methods        
+        #region Public methods               
+        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Anonymous)]        
+        public bool AuthenticateAnonymousUser(string user_id, string user_token)
+        {
+            TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(user_id, user_token);
+            try
+            {
+                DynamicTableEntity user_entity = (DynamicTableEntity)this.UsersTable.Execute(retrieveOperation).Result;
+                if (user_entity == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    IStorageUser user = this.UserEntityResolver(user_entity.PartitionKey, user_entity.RowKey, user_entity.Timestamp, user_entity.Properties,
+                        user_entity.ETag);
+                    OverlordIdentity.InitalizeUserIdentity(user_id, user_token, user.Devices.Select(s => s.Id.ToUrn()).ToArray<string>());
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                Log.ReadTableFailure(string.Format("Failed to find user: Id: {0}, Token: {1}.", user_id, user_token), e);
+                throw;
+            }
+            finally
+            {
+                
+            }
+
+
+            
+
+            /*
+            TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(urn_id, token);
+            TableQuery<DynamicTableEntity> query = new TableQuery<DynamicTableEntity>().Where(
+                TableQuery.CombineFilters(
+                    TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, urn_id.UrnToId()),
+                    TableOperators.And,
+                    TableQuery.GenerateFilterCondition("RowKey", QueryComparisons.Equal, token)
+                )
+            );
+            IEnumerable<IStorageUser> user = this.UsersTable.ExecuteQuery<DynamicTableEntity, IStorageUser>(query, this.UserEntityResolverFunc);
+            return user.FirstOrDefault(); 
+             */
+            //return null;
+        }
+
+        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Anonymous)]        
+        public bool AuthenticateAnonymousDevice(string device_id, string device_token)
+        {
+            TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(device_id, device_token);
+            try
+            {
+                DynamicTableEntity device_entity = (DynamicTableEntity)this.UsersTable.Execute(retrieveOperation).Result;
+                if (device_entity == null)
+                {
+                    return false;
+                }
+                else
+                {
+                    IStorageDevice device = this.DeviceEntityResolver(device_entity.PartitionKey, device_entity.RowKey, device_entity.Timestamp, device_entity.Properties,
+                        device_entity.ETag);
+                    OverlordIdentity.InitializeDeviceIdentity(device_id, device_token, device.Sensors.Select(s => s.Key).ToArray<string>());
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                Log.ReadTableFailure(string.Format("Failed to find user: Id: {0}, Token: {1}.", device_id, device_token), e);
+                throw;
+            }
+            finally
+            {
+                OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.FindUser);
+            }
+        }
+
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Administrator)]
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.AddUser)]
         public IStorageUser AddUser (string name, string token, GeoIp geo_ip)
@@ -259,11 +342,11 @@ namespace Overlord.Storage
 
         }
         
+        
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.FindUser)]
         public IStorageUser FindUser(Guid id, string token)
         {
             TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(id.ToUrn(), token);
-
             try
             {
                 DynamicTableEntity user_entity = (DynamicTableEntity)this.UsersTable.Execute(retrieveOperation).Result;

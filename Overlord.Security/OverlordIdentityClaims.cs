@@ -13,6 +13,8 @@ namespace Overlord.Security.Claims
 
         public const string User = "urn:Overlord/Identity/Roles/User";
 
+        public const string Anonymous = "urn:Overlord/Identity/Roles/Anonymous";
+
     }
 
     public class StorageAction

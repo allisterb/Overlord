@@ -14,6 +14,12 @@ namespace Overlord.Storage
             return Guid.ParseExact(urn.Substring(prefix.Length), "D");
         }
 
+        public static string UrnToId(this string urn)
+        {
+            string prefix = "urn:uuid:";
+            return urn.Substring(prefix.Length);
+        }
+
         public static Guid ToGuid(this string s)
         {            
             return Guid.ParseExact(s, "D");

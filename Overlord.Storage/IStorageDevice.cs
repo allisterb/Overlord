@@ -20,7 +20,7 @@ namespace Overlord.Storage
     {
         public bool Equals(IStorageDevice d1, IStorageDevice d2)
         {
-            if ((d1.Id == d2.Id) && (d1.Version == d2.Version))
+            if ((d1.Id == d2.Id) && (d1.Token == d2.Token) && (d1.Version == d2.Version))
             {
                 return true;
             }
@@ -32,7 +32,7 @@ namespace Overlord.Storage
 
         public int GetHashCode(IStorageDevice d)
         {            
-            return d.Id.GetHashCode();
+            return (d.Id + d.Token + d.Version).GetHashCode();
         }
     }
 }

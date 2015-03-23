@@ -13,6 +13,8 @@ namespace Overlord.Security.ClaimTypes
     public class Authentication
     {
         public const string Role = "urn:Overlord/Identity/Claims/Roles";
+        public const string UserDevice = "urn:Overlord/Identity/Claims/Devices";
+        public const string DeviceSensor = "urn:Overlord/Identity/Claims/Devices";
         public const string AdminUserId = "urn:Overlord/Identity/Claims/UserId";
         public const string AdminUserToken = "urn:Overlord/Identity/Claims/UserToken";
         public const string UserId = "urn:Overlord/Identity/Claims/UserId";

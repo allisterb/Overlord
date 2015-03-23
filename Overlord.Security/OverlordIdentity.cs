@@ -14,8 +14,7 @@ namespace Overlord.Security
 {
     public static class OverlordIdentity
     {
-        
-        
+                
         public static void InitAdminUser(string admin_user_id, string admin_user_token)
         {            
             if (string.IsNullOrEmpty(admin_user_id))
@@ -28,48 +27,78 @@ namespace Overlord.Security
                 new Claim(ClaimTypes.Authentication.AdminUserId, admin_user_id),
                 new Claim(ClaimTypes.Authentication.AdminUserToken, admin_user_token),
                 new Claim(ClaimTypes.Authentication.Role, UserRole.Administrator)                                                        
-            };            
-            ClaimsPrincipal principal = new ClaimsPrincipal(new ClaimsIdentity(user_identity, claims, user_identity.AuthenticationType,
-                user_identity.NameClaimType, ClaimTypes.Authentication.Role));                                     
-            Thread.CurrentPrincipal = principal;
+            };
+            user_identity.AddClaims(claims);
         }
-               
+
+        public static void InitalizeIdentity()
+        {
+            ClaimsIdentity current_user_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;            
+            ClaimsPrincipal principal = new ClaimsPrincipal(new ClaimsIdentity(current_user_identity, current_user_identity.Claims, current_user_identity.AuthenticationType,
+                current_user_identity.NameClaimType, ClaimTypes.Authentication.Role));
+            Thread.CurrentPrincipal = principal;
+            ClaimsIdentity new_user_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
+            foreach (Claim c in new_user_identity.Claims.Where(c => c.Type == ClaimTypes.Authentication.Role))
+            {
+                new_user_identity.RemoveClaim(c);
+            }
+            new_user_identity.AddClaim(new Claim(Authentication.Role, UserRole.Anonymous));
+        }
         
-        public static void InitUser(string user_id, string user_token)
+        public static void InitalizeAnonymousUserIdentity()
+        {
+            ClaimsIdentity user_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;            
+            foreach (Claim c in user_identity.Claims.Where(c => c.Type == ClaimTypes.Authentication.Role))
+            {
+                    user_identity.RemoveClaim(c);
+            }
+            user_identity.AddClaim(new Claim(Authentication.Role, UserRole.Anonymous));
+        }
+        
+        public static void InitalizeUserIdentity(string user_id, string user_token, string[] user_devices)
         {
             if (string.IsNullOrEmpty(user_id))
             {
-                throw new ArgumentNullException("User Id is null or empty.");                
-                //Claim playerId = new Claim(SMediaIdentityClaimTypes., Models.SMediaDbContext.ConvertToAzureResourceName(userIdentity.Name));
+                throw new ArgumentNullException("User Id is null or empty.");                                
             }
             ClaimsIdentity user_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
+            foreach (Claim c in user_identity.Claims.Where(c => c.Type == ClaimTypes.Authentication.Role))
+            {
+                user_identity.RemoveClaim(c);
+            }
             List<Claim> claims = new List<Claim>()
             {
                 new Claim(ClaimTypes.Authentication.UserId, user_id),
-                new Claim(ClaimTypes.Authentication.UserToken, user_token)                                                                     
+                new Claim(ClaimTypes.Authentication.UserToken, user_token),                                                                                     
             };
-            ClaimsPrincipal principal = new ClaimsPrincipal(new ClaimsIdentity(user_identity, claims, user_identity.AuthenticationType,
-                user_identity.NameClaimType, ClaimTypes.Authentication.Role));
-            Thread.CurrentPrincipal = principal;            
+            foreach (string d in user_devices)
+            {
+                claims.Add(new Claim(Authentication.UserDevice, d));
+            }
+            user_identity.AddClaims(claims);                     
         }
         
-        public static void InitDevice(string device_id, string device_token)
-        {                                                
-            if (string.IsNullOrEmpty(device_id))
+        public static void InitializeDeviceIdentity(string device_id, string device_token, string[] device_sensors)
+        {
+            if (string.IsNullOrEmpty(device_id) || string.IsNullOrEmpty(device_token))
             {
-                throw new ArgumentNullException("Device Id is null or empty.");                
-                //Claim playerId = new Claim(SMediaIdentityClaimTypes., Models.SMediaDbContext.ConvertToAzureResourceName(userIdentity.Name));
+                throw new ArgumentNullException("Device Id or Token is null or empty.");                                
             }
             ClaimsIdentity device_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
+            foreach (Claim c in device_identity.Claims.Where(c => c.Type == ClaimTypes.Authentication.Role))
+            {
+                device_identity.RemoveClaim(c);
+            }
             List<Claim> claims = new List<Claim>()
             {
                 new Claim(ClaimTypes.Authentication.DeviceId, device_id),
                 new Claim(ClaimTypes.Authentication.DeviceToken, device_token)                                                                    
             };
-            ClaimsPrincipal principal = new ClaimsPrincipal(new ClaimsIdentity(device_identity, claims, device_identity.AuthenticationType,
-                device_identity.NameClaimType, ClaimTypes.Authentication.Role));
-            Thread.CurrentPrincipal = principal;
-
+            foreach (string s in device_sensors)
+            {
+                claims.Add(new Claim(Authentication.DeviceSensor, s));
+            }
+            device_identity.AddClaims(claims);
         }
 
         public static string CurrentDeviceId
@@ -103,6 +132,17 @@ namespace Overlord.Security
         {
             ClaimsIdentity identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
             if (identity.HasClaim(claim_type, claim))
+            {
+                return true;
+            }
+            else return false;
+        }
+
+        public static bool UserHasDevice(string device_id)
+        {
+            
+            ClaimsIdentity identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
+            if (identity.HasClaim(ClaimTypes.Authentication.UserDevice, device_id))
             {
                 return true;
             }
