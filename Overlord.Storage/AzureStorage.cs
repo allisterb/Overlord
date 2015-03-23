@@ -489,16 +489,79 @@ namespace Overlord.Storage
 
         }
 
-        /*
-        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
+            Operation = StorageAction.FindDevice)]
+        public IStorageDevice FindDevice()
+        {
+            return this.FindDevice(OverlordIdentity.CurrentDeviceId.ToGuid(), 
+                OverlordIdentity.CurrentDeviceToken);
+        }
+
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.UpdateDevice)]
+        public IStorageDevice UpdateDevice(IStorageDevice device)
+        {
+            TableOperation update_device_operation = TableOperation.Merge(CreateDeviceTableEntity(device));
+            try
+            {
+                TableResult result = this.DevicesTable.Execute(update_device_operation);
+                Log.WriteTableSuccess(string.Format("Updated device entity: {0}, Id: {1}, Token: {2}",
+                    device.Name, device.Id.ToUrn(), device.Token, device.Id.ToUrn()));
+                return device;
+            }
+            catch (Exception e)
+            {
+                Log.WriteTableFailure(string.Format("Failed to update device entity: Id: {1}, Token: {2}.",
+                    device.Id.ToUrn(), device.Token), e);
+                throw;
+            }
+            finally
+            {
+                OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.UpdateDevice);
+            }                                
+        }
+        
+        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device)]
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
             Operation = StorageAction.AddSensor)]
-        public IStorageDevice AddSensor(Guid device_id, string sensor_name, string sensor_units, 
+        public IStorageSensor AddSensor(string sensor_name, string sensor_units, 
             IList<Guid> sensor_channels, IList<Guid> sensor_alerts)
         {
-            OverlordIdentity.AddClaim(Authentication.)
+            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
+            IStorageDevice device = this.FindDevice();
+            if (device == null) throw new NullReferenceException("Could not find current device id.");
+            IStorageSensor sensor = new IStorageSensor()
+            {
+                Name = sensor_name,
+                Unit = sensor_units,
+                Channels = sensor_channels,
+                Alerts = sensor_alerts
+            };
+            
+            if (device.Sensors.Keys.Contains(sensor_name))
+            {
+                device.Sensors.Remove(sensor_name);
+            }
+            
+            device.Sensors.Add(sensor_name, sensor);            
+            try
+            {
+                OverlordIdentity.AddClaim(Resource.Storage, StorageAction.UpdateDevice);
+                this.UpdateDevice(device);
+                Log.WriteTableSuccess(string.Format("Added sendor {0} to device entity: Id: {1}, Token: {2}",
+                    sensor.Name, device.Id.ToUrn(), device.Token));
+                return sensor;
+            }
+            catch (Exception e)
+            {
+                Log.ReadTableFailure(string.Format("Failed to read table for devoce: Id: {0}, Token: {1}.", device.Id.ToUrn(), device.Token), e);
+                throw;
+            }
+            finally
+            {
+                OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddSensor);
+            }
         }
-        */
+        
 
         #endregion
     

@@ -64,38 +64,7 @@ namespace Overlord.Testing
             IStorageUser user = storage.FindUser(user_01_id.UrnToGuid(), "admin");
             Assert.NotNull(user);
             Assert.Equal(user.UserName, "admin");            
-        }
-
-        
-        [Fact]
-        public void CanAddDevice()
-        {                        
-            AzureStorage storage = new AzureStorage();
-            //OverlordIdentity.InitalizeIdentity();  
-            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
-            IStorageUser user = storage.FindUser(user_01_id.UrnToGuid(), "admin");
-            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDevice);
-            IStorageDevice device = storage.AddDevice(user, "XUnit_CanAddDevice_Test_Name", "XUnit_CanAddDevice_Test_Token", null);
-            Assert.NotNull(device.Id);
-            Assert.Equal("XUnit_CanAddDevice_Test_Name", device.Name);
-            Assert.Equal("XUnit_CanAddDevice_Test_Token", device.Token);
-        }
-
-
-        [Fact]
-        public void CanFindDevice()
-        {
-            AzureStorage storage = new AzureStorage();            
-            OverlordIdentity.InitalizeUserIdentity("ff", "ff", new string[0]);
-            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
-            IStorageUser user = storage.FindUser(user_01_id.UrnToGuid(), "admin");
-            Assert.NotNull(user);
-            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
-            IStorageDevice device = storage.FindDevice(device_01_id.UrnToGuid(), "XUnit_CanFindDevice_Test_Token");            
-            Assert.NotNull(device);
-            Assert.Contains(device, user.Devices, new IStorageDeviceEq());
-            Assert.True(user.Devices.ContainsDevice(device));                                
-        }
+        }        
 
     }
 }

@@ -17,29 +17,31 @@ namespace Overlord.Security
         #region Private static methods
         private static void InitalizeIdentity()
         {
-            ClaimsIdentity current_user_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
-            ClaimsPrincipal principal = new ClaimsPrincipal(new ClaimsIdentity(current_user_identity, current_user_identity.Claims, current_user_identity.AuthenticationType,
-                current_user_identity.NameClaimType, ClaimTypes.Authentication.Role));
+            //Get the current user identity as a stock IIdentity
+            IIdentity current_user_identity = Thread.CurrentPrincipal.Identity;
+            //Create a new ClaimsPrincipal using our stock identity
+            ClaimsPrincipal principal = new ClaimsPrincipal(new ClaimsIdentity(current_user_identity, null, current_user_identity.AuthenticationType,
+                ClaimsIdentity.DefaultNameClaimType, ClaimTypes.Authentication.Role));
+            //Assign to our current thread principal
             Thread.CurrentPrincipal = principal;
             ClaimsIdentity new_user_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
+            //Remove any of our role claim types that might be present.
             foreach (Claim c in new_user_identity.Claims.Where(c => c.Type == ClaimTypes.Authentication.Role))
             {
                 new_user_identity.RemoveClaim(c);
             }
-            new_user_identity.AddClaim(new Claim(Authentication.Role, UserRole.Anonymous));
+            
         }
-
         #endregion
 
         #region Private static properties
         public static bool Initialized {get; set;}
-
         #endregion
 
         #region Public static methods
         public static void InitAdminUser(string admin_user_id, string admin_user_token)
         {
-            if (!Initialized) InitalizeIdentity();
+            InitalizeIdentity();
             if (string.IsNullOrEmpty(admin_user_id))
             {
                 throw new ArgumentNullException("Admin User Id is null or empty.");                
@@ -54,20 +56,17 @@ namespace Overlord.Security
             user_identity.AddClaims(claims);
         }
         
-        public static void InitalizeAnonymousUserIdentity()
+        public static void InitalizeAnonymousIdentity()
         {
-            if (!Initialized) InitalizeIdentity();
+            InitalizeIdentity();
             ClaimsIdentity user_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;            
-            foreach (Claim c in user_identity.Claims.Where(c => c.Type == ClaimTypes.Authentication.Role))
-            {
-                    user_identity.RemoveClaim(c);
-            }
+            
             user_identity.AddClaim(new Claim(Authentication.Role, UserRole.Anonymous));
         }
         
         public static void InitalizeUserIdentity(string user_id, string user_token, string[] user_devices)
         {
-            if (!Initialized) InitalizeIdentity();
+            InitalizeIdentity();
             if (string.IsNullOrEmpty(user_id))
             {
                 throw new ArgumentNullException("User Id is null or empty.");                                
@@ -79,6 +78,7 @@ namespace Overlord.Security
             }
             List<Claim> claims = new List<Claim>()
             {
+                new Claim(ClaimTypes.Authentication.Role, UserRole.User),
                 new Claim(ClaimTypes.Authentication.UserId, user_id),
                 new Claim(ClaimTypes.Authentication.UserToken, user_token),                                                                                     
             };
@@ -92,18 +92,20 @@ namespace Overlord.Security
         public static void InitializeDeviceIdentity(string device_id, string device_token, 
             string[] device_sensors)
         {
-            if (!Initialized) InitalizeIdentity();
+            InitalizeIdentity();
             if (string.IsNullOrEmpty(device_id) || string.IsNullOrEmpty(device_token))
             {
                 throw new ArgumentNullException("Device Id or Token is null or empty.");                                
             }
             ClaimsIdentity device_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
-            foreach (Claim c in device_identity.Claims.Where(c => c.Type == ClaimTypes.Authentication.Role))
+            foreach (Claim c in device_identity.Claims.Where(c => c.Type == Authentication.Role || c.Type == Authentication.DeviceId || c.Type == Authentication.DeviceToken))
             {
                 device_identity.RemoveClaim(c);
             }
+            
             List<Claim> claims = new List<Claim>()
             {
+                new Claim(ClaimTypes.Authentication.Role, UserRole.Device),
                 new Claim(ClaimTypes.Authentication.DeviceId, device_id),
                 new Claim(ClaimTypes.Authentication.DeviceToken, device_token)                                                                    
             };
@@ -126,6 +128,21 @@ namespace Overlord.Security
                 else return device_id.Value;
             }
         }
+
+        public static string CurrentDeviceToken
+        {
+            get
+            {
+                ClaimsIdentity userIdentity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
+                Claim device_token = userIdentity.Claims.FirstOrDefault(c =>
+                    c.Type == ClaimTypes.Authentication.DeviceToken);
+                if (device_token == null) throw new
+                    InvalidOperationException("Could not retrieve device token claim from identity.");
+                else return device_token.Value;
+            }
+        }
+
+
         
         public static bool IsInRole(string role)
         {
