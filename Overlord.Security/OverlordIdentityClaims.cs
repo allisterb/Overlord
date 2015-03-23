@@ -31,6 +31,12 @@ namespace Overlord.Security.Claims
         public const string FindDevice = "urn:Overlord/Identity/Claims/Device/Retrieve";
         public const string DeleteDevice = "urn:Overlord/Identity/Claims/Device/Delete";
 
-        public const string AddSensor = "urn:Overlord/Identity/Claims/Device/Create";
+        public const string AddSensor = "urn:Overlord/Identity/Claims/Sensor/Create";
+
+        public const string AddChannel = "urn:Overlord/Identity/Claims/Channel/Create";
+
+        public const string AddMessage = "urn:Overlord/Identity/Claims/Channel/Create";
+
+        public const string AddAlert = "urn:Overlord/Identity/Claims/Channel/Create";
     }
 }

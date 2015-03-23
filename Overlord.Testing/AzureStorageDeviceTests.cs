@@ -27,12 +27,15 @@ namespace Overlord.Testing
         public const string device_04_id = "urn:uuid:9094b12e-e92c-44fc-bf64-54628e896e20";
         public const string device_05_id = "urn:uuid:3753de29-d028-4b0b-b4f4-2e4d8e31538b";
 
-        [Fact]
+        public const string sensor_01_name = "CanAddSensor Test";
+        public const string sensor_01_unit = "Degrees";
+
         public void CanParseUrns()
         {
             Guid g = device_01_id.UrnToGuid();
             Assert.Equal(Guid.ParseExact("9ac31883-f0e3-4666-a05f-6add31beb8f4", "D"), g);
             Assert.Equal("urn:uuid:9ac31883-f0e3-4666-a05f-6add31beb8f4".UrnToGuid(), Guid.ParseExact("9ac31883-f0e3-4666-a05f-6add31beb8f4", "D"));
+            Assert.Equal(user_01_id.UrnToId(), g.ToString("D"));
         }
 
         [Fact]
@@ -54,7 +57,7 @@ namespace Overlord.Testing
         public void CanFindDevice()
         {
             AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitalizeUserIdentity(user_01_id, "admin", new string[0]);
+            OverlordIdentity.InitializeUserIdentity(user_01_id, "admin", new string[0]);
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
             IStorageUser user = storage.FindUser(user_01_id.UrnToGuid(), "admin");
             Assert.NotNull(user);
@@ -69,7 +72,12 @@ namespace Overlord.Testing
         public void CanAddSensor()
         {
             AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitializeDeviceIdentity(device_01_id, device_01_token, new string[0]);
+            OverlordIdentity.InitializeDeviceIdentity(device_01_id.UrnToId(), device_01_token, new string[0]);
+            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddSensor);
+            IStorageSensor sensor = storage.AddSensor(sensor_01_name, sensor_01_unit, null, null);
+            Assert.NotNull(sensor);
+            Assert.Equal(sensor.Name, sensor_01_name);
+            Assert.Equal(sensor.Unit, sensor_01_unit);
         }
         
     }

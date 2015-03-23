@@ -35,16 +35,15 @@ namespace Overlord.Storage
         #region Private fields
         ObservableEventListener event_log_listener = new ObservableEventListener();
         private AzureStorageEventSource Log = AzureStorageEventSource.Log;
-
-        private string user_name;
-
-        private CloudStorageAccount _StorageAccount;
-        private OperationContext storage_operation_context;                
+        
+        private CloudStorageAccount _StorageAccount;        
         private CloudTableClient _TableClient;
         private CloudQueueClient _QueueClient;
         private CloudTable _UsersTable;
         private CloudTable _DevicesTable;
-        
+        private CloudTable _ChannelsTable;
+        private CloudTable _AlertsTable;
+        private CloudTable _MessagesTable;        
         #endregion
 
         #region Constructors
@@ -59,7 +58,7 @@ namespace Overlord.Storage
                 {
                     return UserEntityResolver(partitionKey, rowKey, timestamp, properties, etag);
                 };
-            device_entity_resolver = (string partitionKey, string rowKey,
+            DeviceEntityResolverFunc = (string partitionKey, string rowKey,
                 DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) =>
                 {
                     return DeviceEntityResolver(partitionKey, rowKey, timestamp, properties, etag);
@@ -80,7 +79,8 @@ namespace Overlord.Storage
                         #if DEBUG
                         this._StorageAccount = CloudStorageAccount.DevelopmentStorageAccount;
                         #else
-                        this._StorageAccount = CloudStorageAccount.Parse(CloudConfigurationManager.GetSetting("StorageConnectionString"));
+                        this._StorageAccount = CloudStorageAccount.Parse(CloudConfigurationManager
+                            .GetSetting("StorageConnectionString"));
                         #endif                        
                     }
                     catch (StorageException e)
@@ -114,7 +114,8 @@ namespace Overlord.Storage
                         Log.ConnectFailure("Couldn't create Table Client.", e);
                         throw;
                     }                    
-                    this._TableClient.DefaultRequestOptions.RetryPolicy = new ExponentialRetry(TimeSpan.FromSeconds(5), 7);                    
+                    this._TableClient.DefaultRequestOptions.RetryPolicy = new ExponentialRetry(TimeSpan
+                        .FromSeconds(5), 7);                    
                 }
                 return this._TableClient;
             }
@@ -186,7 +187,7 @@ namespace Overlord.Storage
                     }
                     catch (StorageException e)
                     {
-                        Log.ConnectFailure("Failed to Devices table.", e);
+                        Log.ConnectFailure("Failed to connect to Devices table.", e);
                         throw;
                     }
                 }
@@ -197,65 +198,110 @@ namespace Overlord.Storage
                 this._DevicesTable = value;
             }
         }
+
+        private CloudTable ChannelsTable
+        {
+            get
+            {
+                if (this._ChannelsTable == null)
+                {
+                    try
+                    {
+                        this._ChannelsTable = this.TableClient.GetTableReference("Channels");
+                        this._ChannelsTable.CreateIfNotExists();
+                    }
+                    catch (StorageException e)
+                    {
+                        Log.ConnectFailure("Failed to connect to Channels table.", e);
+                        throw;
+                    }
+                }
+                return this._ChannelsTable;
+            }
+            set
+            {
+                this._ChannelsTable = value;
+            }
+        }
+
+        private CloudTable AlertsTable
+        {
+            get
+            {
+                if (this._AlertsTable == null)
+                {
+                    try
+                    {
+                        this._AlertsTable = this.TableClient.GetTableReference("Alerts");
+                        this._AlertsTable.CreateIfNotExists();
+                    }
+                    catch (StorageException e)
+                    {
+                        Log.ConnectFailure("Failed to connect to Alerts table.", e);
+                        throw;
+                    }
+                }
+                return this._AlertsTable;
+            }
+            set
+            {
+                this._AlertsTable = value;
+            }
+        }
+
+        private CloudTable MessagesTable
+        {
+            get
+            {
+                if (this._MessagesTable == null)
+                {
+                    try
+                    {
+                        this._MessagesTable = this.TableClient.GetTableReference("Messages");
+                        this._MessagesTable.CreateIfNotExists();
+                    }
+                    catch (StorageException e)
+                    {
+                        Log.ConnectFailure("Failed to connect to Messages table.", e);
+                        throw;
+                    }
+                }
+                return this._MessagesTable;
+            }
+            set
+            {
+                this._MessagesTable = value;
+            }
+        }        
+        #endregion
         
-        #endregion
-
-        #region Internal methods
-        internal IStorageUser UserEntityResolver (string partitionKey, string rowKey,
-        DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag)
-        {
-            IStorageUser user = new IStorageUser();
-            user.Id = Guid.ParseExact(partitionKey, "D");
-            user.Token = rowKey;
-            user.Version = etag;
-            user.UserName = properties["UserName"].StringValue;
-            user.Devices = JsonConvert.DeserializeObject<IList<IStorageDevice>>(properties["Devices"].StringValue);             
-            return user;
-        }
-
-        internal EntityResolver<IStorageUser> UserEntityResolverFunc;
-
-        internal IStorageDevice DeviceEntityResolver(string partitionKey, string rowKey,
-        DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) 
-        {
-            IStorageDevice device = new IStorageDevice();
-            device.Id = Guid.ParseExact(partitionKey, "D");
-            device.Token = rowKey;
-            device.Version = etag;
-            device.Name = properties["Name"].StringValue;            
-            device.UserId = properties["UserId"].GuidValue.Value;            
-            device.Sensors = JsonConvert.DeserializeObject<IDictionary<string, IStorageSensor>>(properties["Sensors"].StringValue);                
-            return device;
-        }
-
-        internal EntityResolver<IStorageDevice> device_entity_resolver;
-
-
-        #endregion
-
         #region Public methods               
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Anonymous)]        
         public bool AuthenticateAnonymousUser(string user_id, string user_token)
         {
-            TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(user_id, user_token);
+            TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(user_id, 
+                user_token);
             try
             {
-                DynamicTableEntity user_entity = (DynamicTableEntity)this.UsersTable.Execute(retrieveOperation).Result;
+                DynamicTableEntity user_entity = (DynamicTableEntity)this.UsersTable.Execute
+                    (retrieveOperation).Result;
                 if (user_entity == null)
                 {
                     return false;
                 }
                 else
                 {
-                    IStorageUser user = this.UserEntityResolver(user_entity.PartitionKey, user_entity.RowKey, user_entity.Timestamp, user_entity.Properties,
-                        user_entity.ETag);
-                    OverlordIdentity.InitalizeUserIdentity(user_id, user_token, user.Devices.Select(s => s.Id.ToUrn()).ToArray<string>());
+                    IStorageUser user = this.UserEntityResolver(user_entity.PartitionKey, user_entity.RowKey,
+                        user_entity.Timestamp, user_entity.Properties, user_entity.ETag);
+                    OverlordIdentity.InitializeUserIdentity(user_id, user_token, 
+                        user.Devices.Select(s => s.Id.ToUrn()).ToArray<string>());
                     return true;
                 }
             }
             catch (Exception e)
             {
-                Log.ReadTableFailure(string.Format("Failed to find user: Id: {0}, Token: {1}.", user_id, user_token), e);
+                Log.ReadTableFailure(string.Format("Failed to find user: Id: {0}, Token: {1}.", user_id, 
+                    user_token), e);
                 throw;
             }
             finally
@@ -313,7 +359,8 @@ namespace Overlord.Storage
         
 
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Administrator)]
-        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.AddUser)]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
+            Operation = StorageAction.AddUser)]
         public IStorageUser AddUser (string name, string token, GeoIp geo_ip)
         {
             IStorageUser user = new IStorageUser()
@@ -327,13 +374,15 @@ namespace Overlord.Storage
             try
             {
                 result = this.UsersTable.Execute(insertOperation);
-                    Log.WriteTableSuccess(string.Format("Added user: {0}, Id: {1}, Token {2}.", user.UserName, user.Id.ToUrn(), user.Token));
+                    Log.WriteTableSuccess(string.Format("Added user: {0}, Id: {1}, Token {2}.", 
+                        user.UserName, user.Id.ToUrn(), user.Token));
                     return user;
                 
             }
             catch (Exception e)
             {
-                Log.WriteTableFailure(string.Format("Failed to add user: {0}, Id: {1}, Token {2}.", user.UserName, user.Id.ToUrn(), user.Token), e);
+                Log.WriteTableFailure(string.Format("Failed to add user: {0}, Id: {1}, Token {2}.", 
+                    user.UserName, user.Id.ToUrn(), user.Token), e);
                 throw;
             }
             finally
@@ -344,28 +393,31 @@ namespace Overlord.Storage
         }
         
         
-        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.FindUser)]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
+            Operation = StorageAction.FindUser)]
         public IStorageUser FindUser(Guid id, string token)
         {
             TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(id.ToUrn(), token);
             try
             {
-                DynamicTableEntity user_entity = (DynamicTableEntity)this.UsersTable.Execute(retrieveOperation).Result;
+                DynamicTableEntity user_entity = (DynamicTableEntity)this.UsersTable
+                    .Execute(retrieveOperation).Result;
                 if (user_entity == null)
                 {
                     return null;
                 }
                 else
                 {
-                    IStorageUser user = this.UserEntityResolver(user_entity.PartitionKey, user_entity.RowKey, user_entity.Timestamp, user_entity.Properties,
-                        user_entity.ETag);
+                    IStorageUser user = this.UserEntityResolver(user_entity.PartitionKey, user_entity.RowKey, user_entity.Timestamp, 
+                        user_entity.Properties, user_entity.ETag);
 
                     return user;
                 }
             }
             catch (Exception e)
             {
-                Log.ReadTableFailure(string.Format("Failed to find user: Id: {0}, Token: {1}.", id.ToUrn(), token), e);
+                Log.ReadTableFailure(string.Format("Failed to find user: Id: {0}, Token: {1}.", id.ToUrn(), 
+                    token), e);
                 throw;
             }
             finally
@@ -375,7 +427,8 @@ namespace Overlord.Storage
 
         }
 
-        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.UpdateUser)]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
+            Operation = StorageAction.UpdateUser)]
         public IStorageUser UpdateUser(IStorageUser user)
         {
             TableOperation update_user_operation = TableOperation.Merge(CreateUserTableEntity(user));
@@ -399,7 +452,8 @@ namespace Overlord.Storage
         }
 
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Administrator)]
-        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.DeleteUser)]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
+            Operation = StorageAction.DeleteUser)]
         public bool DeleteUser(IStorageUser user)
         {
             TableOperation delete_user_operation = TableOperation.Delete(CreateUserTableEntity(user));
@@ -423,8 +477,9 @@ namespace Overlord.Storage
 
         }
 
-        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.AddDevice)]
-        public IStorageDevice AddDevice(IStorageUser user, string name, string token, GeoIp geoip)
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
+            Operation = StorageAction.AddDevice)]
+        public IStorageDevice AddDevice(IStorageUser user, string name, string token, GeoIp location)
         {            
             IStorageDevice device = new IStorageDevice()
             {
@@ -437,13 +492,15 @@ namespace Overlord.Storage
             
             try
             {                
-                TableOperation insert_device_operation = TableOperation.Insert(AzureStorage.CreateDeviceTableEntity(device));                                
+                TableOperation insert_device_operation = TableOperation
+                    .Insert(AzureStorage.CreateDeviceTableEntity(device));                                
                 TableResult result;
                 result = this.DevicesTable.Execute(insert_device_operation);
-                device.Version = result.Etag;
+                device.ETag = result.Etag;
                 user.Devices.Add(device);
                 TableOperation update_user_operation = TableOperation.Merge(CreateUserTableEntity(user));
-                Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, Token {2} to Devices table.", device.Name, device.Id.ToUrn(), device.Token));
+                Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, Token {2} to Devices table.", 
+                    device.Name, device.Id.ToUrn(), device.Token));
                 result = this.UsersTable.Execute(update_user_operation);                
                 Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, to User entity {2}.", 
                     device.Name, device.Id.ToUrn(), device.Token, user.Id.ToUrn()));
@@ -531,6 +588,7 @@ namespace Overlord.Storage
             if (device == null) throw new NullReferenceException("Could not find current device id.");
             IStorageSensor sensor = new IStorageSensor()
             {
+                DeviceId  = device.Id,
                 Name = sensor_name,
                 Unit = sensor_units,
                 Channels = sensor_channels,
@@ -540,8 +598,7 @@ namespace Overlord.Storage
             if (device.Sensors.Keys.Contains(sensor_name))
             {
                 device.Sensors.Remove(sensor_name);
-            }
-            
+            }            
             device.Sensors.Add(sensor_name, sensor);            
             try
             {
@@ -553,7 +610,8 @@ namespace Overlord.Storage
             }
             catch (Exception e)
             {
-                Log.ReadTableFailure(string.Format("Failed to read table for devoce: Id: {0}, Token: {1}.", device.Id.ToUrn(), device.Token), e);
+                Log.ReadTableFailure(string.Format("Failed to read table for devoce: Id: {0}, Token: {1}.", 
+                    device.Id.ToUrn(), device.Token), e);
                 throw;
             }
             finally
@@ -561,25 +619,99 @@ namespace Overlord.Storage
                 OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddSensor);
             }
         }
-        
 
+        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device)]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage,
+            Operation = StorageAction.AddChannel)]
+        public IStorageChannel AddChannel(string channel_name, string channel_description, 
+            string channel_units)        
+        {
+            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
+            IStorageDevice device = this.FindDevice();
+
+            IStorageChannel channel = new IStorageChannel()
+            {
+                Id = Guid.NewGuid(),                                
+                Name = channel_name,
+                Description = channel_description,
+                Units = channel_description
+                
+            };
+            try
+            {
+                TableOperation insert_channel_operation = TableOperation
+                    .Insert(AzureStorage.CreateChannelTableEntity(channel));
+                TableResult result;                                
+                result = this.ChannelsTable.Execute(insert_channel_operation);                
+                Log.WriteTableSuccess(string.Format("Added channel entity: {0}, Id: {1}.",
+                    channel.Name, channel.Id.ToUrn()));
+                return channel;
+
+            }
+            catch (Exception e)
+            {
+                Log.WriteTableFailure(string.Format("Failed to add Channel entity: {0}, Id: {1}.", channel.Name, channel.Id), e);
+                throw;
+            }
+            finally
+            {
+                OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddChannel);
+            }
+        }     
+        #endregion
+
+        #region Internal methods
+        internal IStorageUser UserEntityResolver(string partitionKey, string rowKey,
+        DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag)
+        {
+            IStorageUser user = new IStorageUser();
+            user.Id = Guid.ParseExact(partitionKey, "D");
+            user.Token = rowKey;
+            user.ETag = etag;
+            user.UserName = properties["UserName"].StringValue;
+            user.Devices = JsonConvert.DeserializeObject<IList<IStorageDevice>>
+                (properties["Devices"].StringValue);
+            return user;
+        }
+
+        internal EntityResolver<IStorageUser> UserEntityResolverFunc;
+
+        internal IStorageDevice DeviceEntityResolver(string partitionKey, string rowKey,
+        DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag)
+        {
+            IStorageDevice device = new IStorageDevice();
+            device.Id = Guid.ParseExact(partitionKey, "D");
+            device.Token = rowKey;
+            device.ETag = etag;
+            device.UserId = properties["UserId"].GuidValue.Value;
+            device.Name = properties["Name"].StringValue;
+            device.Description = properties["Description"].StringValue;
+            device.Location = JsonConvert.DeserializeObject<Common.GeoIp>(properties["Location"].StringValue);            
+            device.Sensors = JsonConvert.DeserializeObject<IDictionary<string, IStorageSensor>>
+                (properties["Sensors"].StringValue);
+            return device;
+        }
+
+        internal EntityResolver<IStorageDevice> DeviceEntityResolverFunc;
         #endregion
     
-        #region Public static methods
+        #region Internal static methods
         internal static DynamicTableEntity CreateUserTableEntity(IStorageUser user)
         {
             var dictionary = new Dictionary<string, EntityProperty>();
             dictionary.Add("UserName", new EntityProperty(user.UserName));
             dictionary.Add("Devices", new EntityProperty(JsonConvert.SerializeObject(user.Devices)));
           
-            return new DynamicTableEntity(user.Id.ToUrn(), user.Token, user.Version, dictionary);
+            return new DynamicTableEntity(user.Id.ToUrn(), user.Token, user.ETag, dictionary);
         }
-
+        
         internal static DynamicTableEntity CreateDeviceTableEntity(IStorageDevice device)
         {
             var dictionary = new Dictionary<string, EntityProperty>();
-            dictionary.Add("Name", new EntityProperty(device.Name));
             dictionary.Add("UserId", new EntityProperty(device.UserId));
+            dictionary.Add("Name", new EntityProperty(device.Name));
+            dictionary.Add("Description", new EntityProperty(device.Description));
+            dictionary.Add("Location", new EntityProperty(JsonConvert.SerializeObject(device.Location)));
             string sensors_json = JsonConvert.SerializeObject(device.Sensors);
             dictionary.Add("Sensors", new EntityProperty(sensors_json));
             /*
@@ -629,11 +761,19 @@ namespace Overlord.Storage
                 }                
                  */ 
             //}
-            return new DynamicTableEntity(device.Id.ToUrn(), device.Token, device.Version, dictionary);
+            return new DynamicTableEntity(device.Id.ToUrn(), device.Token, device.ETag, dictionary);
         }
 
-
-
+        internal static DynamicTableEntity CreateChannelTableEntity(IStorageChannel channel)
+        {
+            var dictionary = new Dictionary<string, EntityProperty>();
+            dictionary.Add("Name", new EntityProperty(channel.Name));
+            dictionary.Add("Description", new EntityProperty(JsonConvert.
+                SerializeObject(channel.Description)));
+            dictionary.Add("Units", new EntityProperty(JsonConvert.SerializeObject(channel.Units)));
+            return new DynamicTableEntity(channel.Id.ToUrn(), channel.Id.ToUrn(), channel.ETag,
+                dictionary);
+        }
         #endregion
     }
 

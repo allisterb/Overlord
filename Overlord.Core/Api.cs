@@ -19,8 +19,13 @@ using Overlord.Core.Models;
 
 namespace Overlord.Core
 {
-    public class Api
+    public static class Api
     {
+        static Api()
+        {
+            OverlordIdentity.InitializeAnonymousIdentity();
+        }
+
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.User)]
         public static void AddDevice(string user_token, DateTime time, string name, GeoIP geoip)
         {

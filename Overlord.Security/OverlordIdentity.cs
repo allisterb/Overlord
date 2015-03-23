@@ -24,13 +24,7 @@ namespace Overlord.Security
                 ClaimsIdentity.DefaultNameClaimType, ClaimTypes.Authentication.Role));
             //Assign to our current thread principal
             Thread.CurrentPrincipal = principal;
-            ClaimsIdentity new_user_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
-            //Remove any of our role claim types that might be present.
-            foreach (Claim c in new_user_identity.Claims.Where(c => c.Type == ClaimTypes.Authentication.Role))
-            {
-                new_user_identity.RemoveClaim(c);
-            }
-            
+            ClaimsIdentity new_user_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;                        
         }
         #endregion
 
@@ -56,7 +50,7 @@ namespace Overlord.Security
             user_identity.AddClaims(claims);
         }
         
-        public static void InitalizeAnonymousIdentity()
+        public static void InitializeAnonymousIdentity()
         {
             InitalizeIdentity();
             ClaimsIdentity user_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;            
@@ -64,7 +58,7 @@ namespace Overlord.Security
             user_identity.AddClaim(new Claim(Authentication.Role, UserRole.Anonymous));
         }
         
-        public static void InitalizeUserIdentity(string user_id, string user_token, string[] user_devices)
+        public static void InitializeUserIdentity(string user_id, string user_token, string[] user_devices)
         {
             InitalizeIdentity();
             if (string.IsNullOrEmpty(user_id))

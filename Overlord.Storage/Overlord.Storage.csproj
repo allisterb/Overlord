@@ -83,10 +83,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AzureStorage.cs" />
-    <Compile Include="AzureStorageDeviceEntity.cs" />
     <Compile Include="AzureStorageEventSource.cs" />
     <Compile Include="AzureStorageReadingEntity.cs" />
-    <Compile Include="AzureStorageUserEntity.cs" />
     <Compile Include="CloudTableExtension.cs" />
     <Compile Include="CommonTypes.cs" />
     <Compile Include="DateTimeExtensions.cs" />

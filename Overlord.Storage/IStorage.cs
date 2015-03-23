@@ -12,6 +12,19 @@ namespace Overlord.Storage
     {
         IStorageUser AddUser(string user_name, string token, GeoIp geo_ip);
         IStorageUser FindUser(Guid id, string token);
-        IStorageDevice AddDevice(IStorageUser user, string name, string token, GeoIp geoip);
+        IStorageUser UpdateUser(IStorageUser user);
+        bool DeleteUser(IStorageUser user);
+
+              
+        IStorageDevice AddDevice(IStorageUser user, string name, string token, GeoIp location);
+        IStorageDevice FindDevice(Guid id, string token);
+        IStorageDevice FindDevice(); //Find the device associated with the current device indentity.
+        IStorageDevice UpdateDevice(IStorageDevice device);
+
+        IStorageSensor AddSensor(string sensor_name, string sensor_units,
+            IList<Guid> sensor_channels, IList<Guid> sensor_alerts);
+
+        IStorageChannel AddChannel(string channel_name, string channel_description,
+            string channel_units);
     }
 }

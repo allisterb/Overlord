@@ -42,7 +42,7 @@ namespace Overlord.Testing
         public void CanAuthorizeAuthenticateAnonymousUser()
         {
             AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitalizeUserIdentity(user_01_id.UrnToId(), "admin", new string[0]);
+            OverlordIdentity.InitializeUserIdentity(user_01_id.UrnToId(), "admin", new string[0]);
             Assert.Throws(typeof(System.Security.SecurityException), 
                 () => storage.AuthenticateAnonymousUser(user_01_id, "admin"));
         }
@@ -50,7 +50,7 @@ namespace Overlord.Testing
         [Fact]
         public void CanAuthenticateAnonymousUser()
         {
-            OverlordIdentity.InitalizeAnonymousIdentity();
+            OverlordIdentity.InitializeAnonymousIdentity();
             AzureStorage storage = new AzureStorage();
             Assert.NotNull(storage.AuthenticateAnonymousUser(user_01_id.UrnToId(), "admin"));
             Assert.False(OverlordIdentity.HasClaim(Authentication.Role, UserRole.Anonymous));
@@ -60,6 +60,7 @@ namespace Overlord.Testing
         [Fact]
         public void CanAuthorizeAddUser()
         {
+            OverlordIdentity.InitializeUserIdentity(user_01_id.UrnToId(), "admin", new string[0]);
             AzureStorage storage = new AzureStorage();
             Assert.Throws(typeof(System.Security.SecurityException), () => 
                 storage.AddUser("XUnit_CanAuthorizeAddUser_Test_Name", "XUnit_CanAuthorizeAddUser_Test_Token", 
@@ -69,6 +70,7 @@ namespace Overlord.Testing
         [Fact]
         public void CanAuthorizeDeleteUser()
         {
+            OverlordIdentity.InitializeUserIdentity(user_01_id.UrnToId(), "admin", new string[0]);
             AzureStorage storage = new AzureStorage();
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
             IStorageUser user = storage.FindUser("d155074f-4e85-4cb5-a597-8bfecb0dfc04".ToGuid(), "admin");
@@ -77,7 +79,7 @@ namespace Overlord.Testing
 
         [Fact]
         public void CanAuthorizeFindUser()
-        {
+        {            
             AzureStorage storage = new AzureStorage();
             Assert.Throws(typeof(System.Security.SecurityException), () => 
                 storage.FindUser("d155074f-4e85-4cb5-a597-8bfecb0dfc04".ToGuid(), "admin"));
@@ -86,7 +88,7 @@ namespace Overlord.Testing
         [Fact]
         public void CanAuthenticateAnonymousDevice()
         {
-            OverlordIdentity.InitalizeAnonymousIdentity();                            
+            OverlordIdentity.InitializeAnonymousIdentity();                            
             AzureStorage storage = new AzureStorage();
             Assert.True(storage.AuthenticateAnonymousDevice(device_01_id.UrnToId(), 
                 "XUnit_CanFindDevice_Test_Token"));

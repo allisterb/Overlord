@@ -76,6 +76,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApiTests.cs" />
     <Compile Include="AzureStorageDeviceTests.cs" />
     <Compile Include="AzureStorageEventSourceTests.cs" />
     <Compile Include="AzureStorageTests.cs" />
