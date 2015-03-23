@@ -79,6 +79,7 @@
     <Compile Include="AzureStorageEventSourceTests.cs" />
     <Compile Include="AzureStorageTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SecurityTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config">

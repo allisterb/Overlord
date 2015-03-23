@@ -279,35 +279,38 @@ namespace Overlord.Storage
             //return null;
         }
 
-        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Anonymous)]        
+        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Anonymous)]
         public bool AuthenticateAnonymousDevice(string device_id, string device_token)
         {
-            TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(device_id, device_token);
+            TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(device_id, 
+                device_token);
             try
             {
-                DynamicTableEntity device_entity = (DynamicTableEntity)this.UsersTable.Execute(retrieveOperation).Result;
+                DynamicTableEntity device_entity = (DynamicTableEntity)this.DevicesTable.Execute
+                    (retrieveOperation).Result;
                 if (device_entity == null)
                 {
                     return false;
                 }
                 else
                 {
-                    IStorageDevice device = this.DeviceEntityResolver(device_entity.PartitionKey, device_entity.RowKey, device_entity.Timestamp, device_entity.Properties,
+                    IStorageDevice device = this.DeviceEntityResolver(device_entity.PartitionKey, 
+                        device_entity.RowKey, device_entity.Timestamp, device_entity.Properties,
                         device_entity.ETag);
-                    OverlordIdentity.InitializeDeviceIdentity(device_id, device_token, device.Sensors.Select(s => s.Key).ToArray<string>());
+                    OverlordIdentity.InitializeDeviceIdentity(device_id, device_token, 
+                        device.Sensors.Select(s => s.Key).ToArray<string>());
                     return true;
                 }
             }
             catch (Exception e)
             {
-                Log.ReadTableFailure(string.Format("Failed to find user: Id: {0}, Token: {1}.", device_id, device_token), e);
+                Log.ReadTableFailure(string.Format
+                    ("Failed to retrieve device entity: Id: {0}, Token: {1}.", device_id, device_token), e);
                 throw;
-            }
-            finally
-            {
-                OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.FindUser);
-            }
+            }            
         }
+
+        
 
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Administrator)]
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.AddUser)]

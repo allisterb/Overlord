@@ -43,29 +43,7 @@ namespace Overlord.Testing
             AzureStorage storage = new AzureStorage();            
             Assert.NotNull(storage);         
         }
-
-        [Fact]
-        public void CanAuthorizeAuthenticateAnonymousUser()
-        {
-            AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitalizeUserIdentity(user_01_id.UrnToId(), "admin", new string[0]);
-            Assert.Throws(typeof(System.Security.SecurityException), () => storage.AuthenticateAnonymousUser(user_01_id, "admin"));
-        }
-
-        [Fact]
-        public void CanAuthenticateAnonymousUser()
-        {
-            AzureStorage storage = new AzureStorage();            
-            Assert.NotNull(storage.AuthenticateAnonymousUser(user_01_id.UrnToId(), "admin"));
-        }
-
-        [Fact]
-        public void CanAuthorizeAddUser()
-        {
-            AzureStorage storage = new AzureStorage();
-            Assert.Throws(typeof(System.Security.SecurityException), () => storage.AddUser("XUnit_CanAuthorizeAddUser_Test_Name", "XUnit_CanAuthorizeAddUser_Test_Token", null));            
-        }
-
+        
         [Fact]
         public void CanAddUser()
         {            
@@ -77,14 +55,7 @@ namespace Overlord.Testing
             Assert.Equal("XUnit_CanAddUser_Test_Name", user.UserName);
             Assert.Equal("XUnit_CanAddUser_Test_Token", user.Token);
         }
-
-        [Fact]
-        public void CanAuthorizeFindUser()
-        {
-            AzureStorage storage = new AzureStorage();
-            Assert.Throws(typeof(System.Security.SecurityException), () => storage.FindUser("d155074f-4e85-4cb5-a597-8bfecb0dfc04".ToGuid(), "admin"));
-        }
-
+        
         [Fact]
         public void CanFindUser()
         {
@@ -95,15 +66,7 @@ namespace Overlord.Testing
             Assert.Equal(user.UserName, "admin");            
         }
 
-        [Fact]
-        public void CanAuthorizeDeleteUser()
-        {
-            AzureStorage storage = new AzureStorage();
-            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
-            IStorageUser user = storage.FindUser("d155074f-4e85-4cb5-a597-8bfecb0dfc04".ToGuid(), "admin");
-            Assert.Throws(typeof(System.Security.SecurityException), () => storage.DeleteUser(user));
-        }
-
+        
         [Fact]
         public void CanAddDevice()
         {                        
