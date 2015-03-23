@@ -45,7 +45,7 @@ namespace Overlord.Testing
         }
 
         [Fact]
-        public void CanAuthorizeAthenticateAnonymousUser()
+        public void CanAuthorizeAuthenticateAnonymousUser()
         {
             AzureStorage storage = new AzureStorage();
             OverlordIdentity.InitalizeUserIdentity(user_01_id.UrnToId(), "admin", new string[0]);
@@ -55,8 +55,7 @@ namespace Overlord.Testing
         [Fact]
         public void CanAuthenticateAnonymousUser()
         {
-            AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitalizeIdentity();            
+            AzureStorage storage = new AzureStorage();            
             Assert.NotNull(storage.AuthenticateAnonymousUser(user_01_id.UrnToId(), "admin"));
         }
 
@@ -69,8 +68,7 @@ namespace Overlord.Testing
 
         [Fact]
         public void CanAddUser()
-        {
-            OverlordIdentity.InitalizeIdentity();   
+        {            
             OverlordIdentity.InitAdminUser(user_01_id, "admin");
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddUser);
             AzureStorage storage = new AzureStorage();
@@ -90,8 +88,7 @@ namespace Overlord.Testing
         [Fact]
         public void CanFindUser()
         {
-            AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitalizeIdentity();  
+            AzureStorage storage = new AzureStorage();            
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
             IStorageUser user = storage.FindUser(user_01_id.UrnToGuid(), "admin");
             Assert.NotNull(user);
@@ -111,7 +108,7 @@ namespace Overlord.Testing
         public void CanAddDevice()
         {                        
             AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitalizeIdentity();  
+            //OverlordIdentity.InitalizeIdentity();  
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
             IStorageUser user = storage.FindUser(user_01_id.UrnToGuid(), "admin");
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDevice);
@@ -125,8 +122,7 @@ namespace Overlord.Testing
         [Fact]
         public void CanFindDevice()
         {
-            AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitalizeIdentity();  
+            AzureStorage storage = new AzureStorage();            
             OverlordIdentity.InitalizeUserIdentity("ff", "ff", new string[0]);
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
             IStorageUser user = storage.FindUser(user_01_id.UrnToGuid(), "admin");

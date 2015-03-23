@@ -13,6 +13,8 @@ namespace Overlord.Security.Claims
 
         public const string User = "urn:Overlord/Identity/Roles/User";
 
+        public const string Device = "urn:Overlord/Identity/Roles/Device";
+
         public const string Anonymous = "urn:Overlord/Identity/Roles/Anonymous";
 
     }
@@ -27,6 +29,8 @@ namespace Overlord.Security.Claims
         public const string AddDevice = "urn:Overlord/Identity/Claims/Device/Create";
         public const string UpdateDevice = "urn:Overlord/Identity/Claims/Device/Update";
         public const string FindDevice = "urn:Overlord/Identity/Claims/Device/Retrieve";
-        public const string DeleteDevice = "urn:Overlord/Identity/Claims/Device/Delete";  
+        public const string DeleteDevice = "urn:Overlord/Identity/Claims/Device/Delete";
+
+        public const string AddSensor = "urn:Overlord/Identity/Claims/Device/Create";
     }
 }

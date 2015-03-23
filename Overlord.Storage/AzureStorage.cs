@@ -263,9 +263,7 @@ namespace Overlord.Storage
                 
             }
 
-
             
-
             /*
             TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(urn_id, token);
             TableQuery<DynamicTableEntity> query = new TableQuery<DynamicTableEntity>().Where(
@@ -460,10 +458,12 @@ namespace Overlord.Storage
             }
         }
 
-        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.FindDevice)]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
+            Operation = StorageAction.FindDevice)]
         public IStorageDevice FindDevice(Guid id, string token)
         {
-            TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(id.ToUrn(), token);
+            TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(id.ToUrn(), 
+                token);
             try
             {
                 DynamicTableEntity device_entity = (DynamicTableEntity)this.DevicesTable.Execute(retrieveOperation).Result;
@@ -485,6 +485,17 @@ namespace Overlord.Storage
             }
 
         }
+
+        /*
+        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
+            Operation = StorageAction.AddSensor)]
+        public IStorageDevice AddSensor(Guid device_id, string sensor_name, string sensor_units, 
+            IList<Guid> sensor_channels, IList<Guid> sensor_alerts)
+        {
+            OverlordIdentity.AddClaim(Authentication.)
+        }
+        */
 
         #endregion
     
