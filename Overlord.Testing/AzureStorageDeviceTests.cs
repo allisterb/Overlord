@@ -56,8 +56,8 @@ namespace Overlord.Testing
             OverlordIdentity.InitializeUserIdentity(AzureStorageTests.user_02_id, 
                 AzureStorageTests.user_02_token, new string[0]);  
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
-            IStorageUser user = storage.FindUser(AzureStorageTests.user_01_id.UrnToGuid(), 
-                AzureStorageTests.user_01_token);
+            IStorageUser user = storage.FindUser(AzureStorageTests.user_02_id.UrnToGuid(), 
+                AzureStorageTests.user_02_token);
             Assert.NotNull(user);        
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDevice);
             IStorageDevice device = storage.AddDevice(user, "xUnit_CanAddDeviceTest_Name",
