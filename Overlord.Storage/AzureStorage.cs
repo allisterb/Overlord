@@ -291,17 +291,17 @@ namespace Overlord.Storage
                 }
                 else
                 {
-                    IStorageUser user = this.UserEntityResolver(user_entity.PartitionKey, user_entity.RowKey,
-                        user_entity.Timestamp, user_entity.Properties, user_entity.ETag);
-                    OverlordIdentity.InitializeUserIdentity(user_id, user_token, 
-                        user.Devices.Select(s => s.Id.ToUrn()).ToArray<string>());
+                    IStorageUser user = this.UserEntityResolver(user_entity.PartitionKey, 
+                        user_entity.RowKey, user_entity.Timestamp, user_entity.Properties, user_entity.ETag);
+                    OverlordIdentity.InitializeUserIdentity(user.Id.ToUrn(), user.Token, 
+                        user.Devices.Select(d => d.ToUrn()).ToList<String>());                        
                     return true;
                 }
             }
             catch (Exception e)
             {
-                Log.ReadTableFailure(string.Format("Failed to find user: Id: {0}, Token: {1}.", user_id, 
-                    user_token), e);
+                Log.ReadTableFailure(string.Format("Failed to read user entity: Id: {0}, Token: {1}.", 
+                    user_id, user_token), e);
                 throw;
             }
             finally
@@ -356,32 +356,34 @@ namespace Overlord.Storage
             }            
         }
 
-        
 
+     
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Administrator)]
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
             Operation = StorageAction.AddUser)]
-        public IStorageUser AddUser (string name, string token, GeoIp geo_ip)
+        public IStorageUser AddUser (string name, string token, GeoIp geo_ip, string id = null)
         {
+                                                        
             IStorageUser user = new IStorageUser()
             {
-                Id = Guid.NewGuid(),
+                Id = string.IsNullOrEmpty(id) ? Guid.NewGuid() : id.UrnToGuid(),
                 Token = token,
-                UserName = name
+                UserName = name,
+                Devices = new List<Guid>()
             };
             TableOperation insertOperation = TableOperation.Insert(AzureStorage.CreateUserTableEntity(user));
             TableResult result;
             try
             {
                 result = this.UsersTable.Execute(insertOperation);
-                    Log.WriteTableSuccess(string.Format("Added user: {0}, Id: {1}, Token {2}.", 
+                    Log.WriteTableSuccess(string.Format("Added user entity: {0}, Id: {1}, Token {2}.", 
                         user.UserName, user.Id.ToUrn(), user.Token));
                     return user;
                 
             }
             catch (Exception e)
             {
-                Log.WriteTableFailure(string.Format("Failed to add user: {0}, Id: {1}, Token {2}.", 
+                Log.WriteTableFailure(string.Format("Failed to add user entity: {0}, Id: {1}, Token {2}.", 
                     user.UserName, user.Id.ToUrn(), user.Token), e);
                 throw;
             }
@@ -416,8 +418,8 @@ namespace Overlord.Storage
             }
             catch (Exception e)
             {
-                Log.ReadTableFailure(string.Format("Failed to find user: Id: {0}, Token: {1}.", id.ToUrn(), 
-                    token), e);
+                Log.ReadTableFailure(string.Format("Failed to find user entity: Id: {0}, Token: {1}.", 
+                    id.ToUrn(), token), e);
                 throw;
             }
             finally
@@ -435,13 +437,13 @@ namespace Overlord.Storage
             try
             {
                 TableResult result = this.UsersTable.Execute(update_user_operation);
-                Log.WriteTableSuccess(string.Format("Updated user: {0}, Id: {1}, Token: {2}",
+                Log.WriteTableSuccess(string.Format("Updated user entity: {0}, Id: {1}, Token: {2}",
                     user.UserName, user.Id.ToUrn(), user.Token, user.Id.ToUrn()));
                 return user;
             }
             catch (Exception e)
             {
-                Log.WriteTableFailure(string.Format("Failed to updated user: Id: {1}, Token: {2}.",
+                Log.WriteTableFailure(string.Format("Failed to updated user entity: Id: {1}, Token: {2}.",
                     user.Id.ToUrn(), user.Token), e);
                 throw;
             }
@@ -460,13 +462,13 @@ namespace Overlord.Storage
             try
             {
                 TableResult result = this.UsersTable.Execute(delete_user_operation);
-                Log.WriteTableSuccess(string.Format("Deleted user: {0}, Id: {1}, Token: {2}",
+                Log.WriteTableSuccess(string.Format("Deleted user entity: {0}, Id: {1}, Token: {2}",
                     user.UserName, user.Id.ToUrn(), user.Token, user.Id.ToUrn()));
                 return true;
             }
             catch (Exception e)
             {
-                Log.WriteTableFailure(string.Format("Failed to delete user: Id: {1}, Token: {2}.",
+                Log.WriteTableFailure(string.Format("Failed to delete user entity: Id: {1}, Token: {2}.",
                     user.Id.ToUrn(), user.Token), e);
                 throw;
             }
@@ -479,11 +481,12 @@ namespace Overlord.Storage
 
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
             Operation = StorageAction.AddDevice)]
-        public IStorageDevice AddDevice(IStorageUser user, string name, string token, GeoIp location)
-        {            
+        public IStorageDevice AddDevice(IStorageUser user, string name, string token, GeoIp location, 
+            string id = null)
+        {             
             IStorageDevice device = new IStorageDevice()
             {
-                Id = Guid.NewGuid(),
+                Id = string.IsNullOrEmpty(id) ? Guid.NewGuid() : id.UrnToGuid(),
                 UserId = user.Id,
                 Token = token,
                 Name = name,
@@ -497,19 +500,21 @@ namespace Overlord.Storage
                 TableResult result;
                 result = this.DevicesTable.Execute(insert_device_operation);
                 device.ETag = result.Etag;
-                user.Devices.Add(device);
+                user.Devices.Add(device.Id);
                 TableOperation update_user_operation = TableOperation.Merge(CreateUserTableEntity(user));
-                Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, Token {2} to Devices table.", 
-                    device.Name, device.Id.ToUrn(), device.Token));
+                Log.WriteTableSuccess(string.
+                    Format("Added device entity: {0}, Id: {1}, Token {2} to Devices table.", 
+                        device.Name, device.Id.ToUrn(), device.Token));
                 result = this.UsersTable.Execute(update_user_operation);                
-                Log.WriteTableSuccess(string.Format("Added device: {0}, Id: {1}, to User entity {2}.", 
+                Log.WriteTableSuccess(string.Format("Added device entity: {0}, Id: {1}, to User entity {2}.", 
                     device.Name, device.Id.ToUrn(), device.Token, user.Id.ToUrn()));
                 return device;
 
             }
             catch (Exception e)
             {
-                Log.WriteTableFailure(string.Format("Failed to add device: {0}, Id: {1}, Token {2}.", device.Name, device.Id.ToUrn(), device.Token), e);
+                Log.WriteTableFailure(string.Format("Failed to add device entity: {0}, Id: {1}, Token {2}.",
+                    device.Name, device.Id.ToUrn(), device.Token), e);
                 throw;
             }
             finally
@@ -526,17 +531,19 @@ namespace Overlord.Storage
                 token);
             try
             {
-                DynamicTableEntity device_entity = (DynamicTableEntity)this.DevicesTable.Execute(retrieveOperation).Result;
+                DynamicTableEntity device_entity = (DynamicTableEntity)this.DevicesTable
+                    .Execute(retrieveOperation).Result;
                 if (device_entity == null)
                 {
                     return null;
                 }               
-                return this.DeviceEntityResolver(device_entity.PartitionKey, device_entity.RowKey, device_entity.Timestamp,
-                    device_entity.Properties, device_entity.ETag);
+                return this.DeviceEntityResolver(device_entity.PartitionKey, device_entity.RowKey, 
+                    device_entity.Timestamp, device_entity.Properties, device_entity.ETag);
             }
             catch (Exception e)
             {
-                Log.ReadTableFailure(string.Format("Failed to read table for devoce: Id: {0}, Token: {1}.", id.ToUrn(), token), e);
+                Log.ReadTableFailure(string.Format("Failed to read table for device: Id: {0}, Token: {1}.", 
+                    id.ToUrn(), token), e);
                 throw;
             }
             finally
@@ -604,13 +611,13 @@ namespace Overlord.Storage
             {
                 OverlordIdentity.AddClaim(Resource.Storage, StorageAction.UpdateDevice);
                 this.UpdateDevice(device);
-                Log.WriteTableSuccess(string.Format("Added sendor {0} to device entity: Id: {1}, Token: {2}",
+                Log.WriteTableSuccess(string.Format("Added sensor {0} to device entity: Id: {1}, Token: {2}",
                     sensor.Name, device.Id.ToUrn(), device.Token));
                 return sensor;
             }
             catch (Exception e)
             {
-                Log.ReadTableFailure(string.Format("Failed to read table for devoce: Id: {0}, Token: {1}.", 
+                Log.ReadTableFailure(string.Format("Failed to read table for device: Id: {0}, Token: {1}.", 
                     device.Id.ToUrn(), device.Token), e);
                 throw;
             }
@@ -669,7 +676,7 @@ namespace Overlord.Storage
             user.Token = rowKey;
             user.ETag = etag;
             user.UserName = properties["UserName"].StringValue;
-            user.Devices = JsonConvert.DeserializeObject<IList<IStorageDevice>>
+            user.Devices = JsonConvert.DeserializeObject<IList<Guid>>
                 (properties["Devices"].StringValue);
             return user;
         }
@@ -685,10 +692,12 @@ namespace Overlord.Storage
             device.ETag = etag;
             device.UserId = properties["UserId"].GuidValue.Value;
             device.Name = properties["Name"].StringValue;
-            device.Description = properties["Description"].StringValue;
-            device.Location = JsonConvert.DeserializeObject<Common.GeoIp>(properties["Location"].StringValue);            
-            device.Sensors = JsonConvert.DeserializeObject<IDictionary<string, IStorageSensor>>
+            device.Description = properties.Keys.Contains("Description") ? 
+                properties["Description"].StringValue : null;
+             device.Sensors = JsonConvert.DeserializeObject<IDictionary<string, IStorageSensor>>
                 (properties["Sensors"].StringValue);
+            device.Location =  properties.Keys.Contains("Location") ? 
+                JsonConvert.DeserializeObject<Common.GeoIp>(properties["Location"].StringValue) : null;            
             return device;
         }
 

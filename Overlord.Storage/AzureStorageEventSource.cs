@@ -18,9 +18,9 @@ namespace Overlord.Storage
         public class Keywords
         {
           public const EventKeywords Configuration = (EventKeywords)1;
-          public const EventKeywords Table = (EventKeywords)2;
-          public const EventKeywords Diagnostic = (EventKeywords)4;
-          public const EventKeywords Perf = (EventKeywords)8;
+          public const EventKeywords Diagnostic = (EventKeywords)2;
+          public const EventKeywords Perf = (EventKeywords)4;
+          public const EventKeywords Table = (EventKeywords)8;          
         }
  
         public class Tasks
@@ -29,8 +29,11 @@ namespace Overlord.Storage
           public const EventTask Connect = (EventTask)2;
           public const EventTask WriteTable = (EventTask)4;
           public const EventTask ReadTable = (EventTask)8;
+          public const EventTask AddDeviceEntity = (EventTask)16;
+          public const EventTask FindDeviceEntity = (EventTask)32;
+          public const EventTask UpdateDeviceEntity = (EventTask)64;
+          public const EventTask DeleteDeviceEntity = (EventTask)128;
         }
-
 
         private static AzureStorageEventSource _log = new AzureStorageEventSource();
         private AzureStorageEventSource() { }

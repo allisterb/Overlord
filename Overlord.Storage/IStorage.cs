@@ -10,13 +10,14 @@ namespace Overlord.Storage
 {
     public interface IStorage
     {
-        IStorageUser AddUser(string user_name, string token, GeoIp geo_ip);
+        IStorageUser AddUser(string user_name, string token, GeoIp geo_ip, string id = null);
         IStorageUser FindUser(Guid id, string token);
         IStorageUser UpdateUser(IStorageUser user);
         bool DeleteUser(IStorageUser user);
 
               
-        IStorageDevice AddDevice(IStorageUser user, string name, string token, GeoIp location);
+        IStorageDevice AddDevice(IStorageUser user, string name, string token, GeoIp location, 
+            string id = null);
         IStorageDevice FindDevice(Guid id, string token);
         IStorageDevice FindDevice(); //Find the device associated with the current device indentity.
         IStorageDevice UpdateDevice(IStorageDevice device);

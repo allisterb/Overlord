@@ -33,7 +33,8 @@ namespace Overlord.Security
         #endregion
 
         #region Public static methods
-        public static void InitAdminUser(string admin_user_id, string admin_user_token)
+        public static void InitializeAdminUserIdentity(string admin_user_id, string admin_user_token, 
+            IList<string> devices)
         {
             InitalizeIdentity();
             if (string.IsNullOrEmpty(admin_user_id))
@@ -47,6 +48,11 @@ namespace Overlord.Security
                 new Claim(ClaimTypes.Authentication.AdminUserToken, admin_user_token),
                 new Claim(ClaimTypes.Authentication.Role, UserRole.Administrator)                                                        
             };
+            foreach (string d in devices)
+            {
+                claims.Add(new Claim(Authentication.UserDevice, d));
+            }
+
             user_identity.AddClaims(claims);
         }
         
@@ -58,10 +64,10 @@ namespace Overlord.Security
             user_identity.AddClaim(new Claim(Authentication.Role, UserRole.Anonymous));
         }
         
-        public static void InitializeUserIdentity(string user_id, string user_token, string[] user_devices)
+        public static void InitializeUserIdentity(string id, string token, IList<string> devices)
         {
             InitalizeIdentity();
-            if (string.IsNullOrEmpty(user_id))
+            if (id == null)
             {
                 throw new ArgumentNullException("User Id is null or empty.");                                
             }
@@ -73,21 +79,20 @@ namespace Overlord.Security
             List<Claim> claims = new List<Claim>()
             {
                 new Claim(ClaimTypes.Authentication.Role, UserRole.User),
-                new Claim(ClaimTypes.Authentication.UserId, user_id),
-                new Claim(ClaimTypes.Authentication.UserToken, user_token),                                                                                     
+                new Claim(ClaimTypes.Authentication.UserId, id),
+                new Claim(ClaimTypes.Authentication.UserToken, token),                                                                                     
             };
-            foreach (string d in user_devices)
+            foreach (string d in devices)
             {
                 claims.Add(new Claim(Authentication.UserDevice, d));
             }
             user_identity.AddClaims(claims);                     
         }
         
-        public static void InitializeDeviceIdentity(string device_id, string device_token, 
-            string[] device_sensors)
+        public static void InitializeDeviceIdentity(string id, string token, IList<string> sensors)
         {
             InitalizeIdentity();
-            if (string.IsNullOrEmpty(device_id) || string.IsNullOrEmpty(device_token))
+            if (id == null)
             {
                 throw new ArgumentNullException("Device Id or Token is null or empty.");                                
             }
@@ -100,10 +105,10 @@ namespace Overlord.Security
             List<Claim> claims = new List<Claim>()
             {
                 new Claim(ClaimTypes.Authentication.Role, UserRole.Device),
-                new Claim(ClaimTypes.Authentication.DeviceId, device_id),
-                new Claim(ClaimTypes.Authentication.DeviceToken, device_token)                                                                    
+                new Claim(ClaimTypes.Authentication.DeviceId, id),
+                new Claim(ClaimTypes.Authentication.DeviceToken, token)                                                                    
             };
-            foreach (string s in device_sensors)
+            foreach (string s in sensors)
             {
                 claims.Add(new Claim(Authentication.DeviceSensor, s));
             }
@@ -210,7 +215,8 @@ namespace Overlord.Security
             else
             {
                 ClaimsIdentity claims_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
-                claims_identity.RemoveClaim(claims_identity.Claims.Where(c => c.Type == claim_type && c.Value == claim_value).FirstOrDefault());                
+                claims_identity.RemoveClaim(claims_identity.Claims
+                    .Where(c => c.Type == claim_type && c.Value == claim_value).FirstOrDefault());
             }
         }
 

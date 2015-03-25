@@ -79,7 +79,9 @@
     <Compile Include="ApiTests.cs" />
     <Compile Include="AzureStorageDeviceTests.cs" />
     <Compile Include="AzureStorageEventSourceTests.cs" />
+    <Compile Include="AzureStorageSensorTests.cs" />
     <Compile Include="AzureStorageTests.cs" />
+    <Compile Include="AzureStorageUserTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="AzureStorageSecurityTests.cs" />
   </ItemGroup>

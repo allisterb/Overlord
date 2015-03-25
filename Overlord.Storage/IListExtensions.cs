@@ -12,5 +12,11 @@ namespace Overlord.Storage
         {
             return list.Contains(device, new IStorageDeviceEq());
         }
+
+        public static IStorageDevice FindDevice(this IList<IStorageDevice> list, IStorageDevice device)
+        {
+            IStorageDeviceEq eq = new IStorageDeviceEq();
+            return list.FirstOrDefault(d => eq.Equals(device, d));
+        }
     }
 }
