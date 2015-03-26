@@ -30,54 +30,37 @@ using Overlord.Storage.Common;
 namespace Overlord.Storage
 {
     public partial class AzureStorage
-    {
-        /*
-        public static DynamicTableEntity CreateSensorReadingEntity(Guid device_id, string sensor_name,
-            DateTime time, object reading)
+    {        
+        private const string SensorReadingKeyFormat = "{0}_{1}_{2:X5}";
+
+        public static DynamicTableEntity CreateSensorReadingEntity(IStorageSensorReading reading)
         {
             Dictionary<string, EntityProperty> dictionary = new Dictionary<string, EntityProperty>();
-            dictionary.Add("DeviceId", new EntityProperty(device_id.ToUrn()));
-            if (sensor_name.ToSensorType() == typeof(byte[]))
-            {                
-            dictionary.Add("UserId", new EntityProperty(device.UserId));
-            string json = JsonConvert.SerializeObject((byte[])sensor.Value);
-                dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-            }
-                    if (type == typeof(bool))
-                    {
-                        string json = JsonConvert.SerializeObject((bool)sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    }
-
-                    if (type == typeof(DateTime))
-                    {
-                        string json = JsonConvert.SerializeObject((DateTime)sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    }
-                    if (type == typeof(long))
-                    {
-                        string json = JsonConvert.SerializeObject((long)sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    }
-                    if (type == typeof(double))
-                    {
-                        string json = JsonConvert.SerializeObject((double)sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    } 
-
-                    if (type == typeof(string))
-                    {
-                        string json = JsonConvert.SerializeObject((string) sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    } 
-                    else if (type == typeof(int))
-                    {
-                        string json = JsonConvert.SerializeObject((int)sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    }
-                }           
-
-        }*/
+            dictionary.Add("DeviceId", new EntityProperty(reading.DeviceId.ToUrn()));
+            dictionary.Add("Time", new EntityProperty(reading.Time));
+            dictionary.Add("SensorName", new EntityProperty(reading.SensorName));
+            if (reading.SensorName.ToSensorType() is string) dictionary.Add(reading.SensorName, 
+                new EntityProperty((string)reading.Reading));
+            if (reading.SensorName.ToSensorType() is int) dictionary.Add(reading.SensorName, 
+                new EntityProperty((int)reading.Reading));
+            if (reading.SensorName.ToSensorType() is double) dictionary.Add(reading.SensorName, 
+                new EntityProperty((double)reading.Reading));
+            if (reading.SensorName.ToSensorType() is DateTime) dictionary.Add(reading.SensorName, 
+                new EntityProperty((DateTime)reading.Reading));
+            if (reading.SensorName.ToSensorType() is bool) dictionary.Add(reading.SensorName, 
+                new EntityProperty((bool)reading.Reading));
+            if (reading.SensorName.ToSensorType() is byte[]) dictionary.Add(reading.SensorName, 
+                new EntityProperty((byte[])reading.Reading));
+            return new DynamicTableEntity(reading.Time.GeneratePartitionKey(), 
+                string.Format(
+                CultureInfo.InvariantCulture,
+                SensorReadingKeyFormat,
+                reading.DeviceId.ToUrn() + ":",
+                reading.SensorName + ":",
+                reading.Time.GetTicks()),
+                null, dictionary);            
+          }           
+        }
     /*    
     [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Administrator)]
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage,
@@ -121,5 +104,5 @@ namespace Overlord.Storage
 
         }
      * */
-    }
+    
 }

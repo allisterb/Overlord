@@ -11,8 +11,10 @@ namespace Overlord.Storage
     public class IStorageSensorReading
     {
         #region Public properties
+        public Guid DeviceId { get; set; }
         public string SensorName;
-        public DateTime Time { get; set; } 
+        public DateTime Time { get; set; }
+        public string ETag { get; set; }
         public object Reading { get; set; }
         #endregion
 
