@@ -26,8 +26,10 @@ namespace Overlord.Testing
         {
             AzureStorage storage = new AzureStorage();            
             OverlordIdentity.InitializeDeviceIdentity(AzureStorageTests.device_01_id, 
-                AzureStorageTests.device_01_token, null);
-            OverlordIdentity.AddClaim(Resource.Storage.a)
+                AzureStorageTests.device_01_token, null);            
+            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddSensor);
+            storage.AddSensor("S1", "", null, null);
+            storage.AddSensorReading("S1", DateTime.Now, 32);
         }
     }
 }

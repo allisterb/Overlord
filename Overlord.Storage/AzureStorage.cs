@@ -40,6 +40,7 @@ namespace Overlord.Storage
         private CloudQueueClient _QueueClient;
         private CloudTable _UsersTable;
         private CloudTable _DevicesTable;
+        private CloudTable _SensorReadingsTable;
         private CloudTable _ChannelsTable;
         private CloudTable _AlertsTable;
         private CloudTable _MessagesTable;        
@@ -195,6 +196,31 @@ namespace Overlord.Storage
             set
             {
                 this._DevicesTable = value;
+            }
+        }
+
+        private CloudTable SensorReadingsTable
+        {
+            get
+            {
+                if (this._SensorReadingsTable == null)
+                {
+                    try
+                    {
+                        this._SensorReadingsTable = this.TableClient.GetTableReference("Readings");
+                        this._SensorReadingsTable.CreateIfNotExists();
+                    }
+                    catch (StorageException e)
+                    {
+                        Log.ConnectFailure("Failed to connect to Readings table.", e);
+                        throw;
+                    }
+                }
+                return this._SensorReadingsTable;
+            }
+            set
+            {
+                this._SensorReadingsTable = value;
             }
         }
 
@@ -666,7 +692,56 @@ namespace Overlord.Storage
             {
                 OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddChannel);
             }
-        }     
+        }
+     
+        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device)]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
+            Operation = StorageAction.AddSensorReading)]
+        public IStorageSensorReading AddSensorReading(string sensor_name, DateTime time, object value)
+        {
+            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
+            IStorageDevice device = this.FindDevice();
+            IStorageSensorReading reading = new IStorageSensorReading()
+            {
+                DeviceId = device.Id,
+                SensorName = sensor_name,
+                Time = time,
+                Reading = value
+            };
+            TableOperation insert_operation = TableOperation
+                .Insert(AzureStorage.CreateSensorReadingEntity(reading));
+            TableResult result;
+            try
+            {
+                result = this.SensorReadingsTable.Execute(insert_operation);
+                    Log.WriteTableSuccess(string.Format
+                       ("Added sensor reading entity: Sensor Name: {0}, Partition: {1}, RowKey: {2}, " +
+                        "Type: {3}, Value: {4} ", reading.SensorName, reading.Time.GeneratePartitionKey(), 
+                         string.Format(CultureInfo.InvariantCulture, SensorReadingKeyFormat,
+                             reading.DeviceId.ToUrn() + ":",
+                             reading.SensorName + ":",
+                             reading.Time.GetTicks()), 
+                             reading.SensorName.ToSensorType().ToString() , reading.Reading));
+                reading.ETag = result.Etag;
+                return reading;                
+            }
+            catch (Exception e)
+            {
+                Log.WriteTableFailure(string.Format
+                   ("Failed to add sensor reading entity: Sensor Name: {0}, Partition: {1}, RowKey: {2}, " +
+                        "Type: {3}, Value: {4} ", reading.SensorName, reading.Time.GeneratePartitionKey(), 
+                         string.Format(CultureInfo.InvariantCulture, SensorReadingKeyFormat,
+                             reading.DeviceId.ToUrn() + ":",
+                             reading.SensorName + ":",
+                             reading.Time.GetTicks()), 
+                             reading.SensorName.ToSensorType().ToString() , reading.Reading), e);
+                throw;
+            }
+            finally
+            {
+                OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddSensorReading);
+            }
+        }
         #endregion
 
         #region Internal methods

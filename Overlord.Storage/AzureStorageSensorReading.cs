@@ -39,17 +39,17 @@ namespace Overlord.Storage
             dictionary.Add("DeviceId", new EntityProperty(reading.DeviceId.ToUrn()));
             dictionary.Add("Time", new EntityProperty(reading.Time));
             dictionary.Add("SensorName", new EntityProperty(reading.SensorName));
-            if (reading.SensorName.ToSensorType() is string) dictionary.Add(reading.SensorName, 
+            if (reading.SensorName.ToSensorType() == typeof(string)) dictionary.Add(reading.SensorName, 
                 new EntityProperty((string)reading.Reading));
-            if (reading.SensorName.ToSensorType() is int) dictionary.Add(reading.SensorName, 
+            if (reading.SensorName.ToSensorType() == typeof(int)) dictionary.Add(reading.SensorName, 
                 new EntityProperty((int)reading.Reading));
-            if (reading.SensorName.ToSensorType() is double) dictionary.Add(reading.SensorName, 
+            if (reading.SensorName.ToSensorType() == typeof(double)) dictionary.Add(reading.SensorName, 
                 new EntityProperty((double)reading.Reading));
-            if (reading.SensorName.ToSensorType() is DateTime) dictionary.Add(reading.SensorName, 
+            if (reading.SensorName.ToSensorType() == typeof(DateTime)) dictionary.Add(reading.SensorName, 
                 new EntityProperty((DateTime)reading.Reading));
-            if (reading.SensorName.ToSensorType() is bool) dictionary.Add(reading.SensorName, 
+            if (reading.SensorName.ToSensorType() == typeof(bool)) dictionary.Add(reading.SensorName, 
                 new EntityProperty((bool)reading.Reading));
-            if (reading.SensorName.ToSensorType() is byte[]) dictionary.Add(reading.SensorName, 
+            if (reading.SensorName.ToSensorType() == typeof(byte[])) dictionary.Add(reading.SensorName, 
                 new EntityProperty((byte[])reading.Reading));
             return new DynamicTableEntity(reading.Time.GeneratePartitionKey(), 
                 string.Format(
