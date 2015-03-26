@@ -18,6 +18,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Overlord.Security", "Overlo
 EndProject
 Project("{CC5FD16D-436D-48AD-A40C-5A424C6E3E79}") = "Overlord.Cloud.Azure", "Overlord.Cloud.Azure\Overlord.Cloud.Azure.ccproj", "{4D53372E-728D-43CA-8F6D-0D9A6BBF2631}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Overlord.Digest.Azure", "Overlord.Digest.Azure\Overlord.Digest.Azure.csproj", "{7CB44C96-F809-49FF-9B53-0F80CF401C21}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,6 +46,10 @@ Global
 		{4D53372E-728D-43CA-8F6D-0D9A6BBF2631}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4D53372E-728D-43CA-8F6D-0D9A6BBF2631}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4D53372E-728D-43CA-8F6D-0D9A6BBF2631}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7CB44C96-F809-49FF-9B53-0F80CF401C21}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7CB44C96-F809-49FF-9B53-0F80CF401C21}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7CB44C96-F809-49FF-9B53-0F80CF401C21}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7CB44C96-F809-49FF-9B53-0F80CF401C21}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
