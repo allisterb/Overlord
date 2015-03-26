@@ -79,6 +79,7 @@
     <Compile Include="ApiTests.cs" />
     <Compile Include="AzureStorageDeviceTests.cs" />
     <Compile Include="AzureStorageEventSourceTests.cs" />
+    <Compile Include="AzureStorageSensorReadingTests.cs" />
     <Compile Include="AzureStorageSensorTests.cs" />
     <Compile Include="AzureStorageTests.cs" />
     <Compile Include="AzureStorageUserTests.cs" />

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Overlord.Storage
@@ -14,7 +15,7 @@ namespace Overlord.Storage
         public string Name { get; set; }
         public string Unit { get; set; }
         public IList<Guid> Channels { get; set; }
-        public IList<Guid> Alerts { get; set; }
+        public IList<Guid> Alerts { get; set; }            
     }
 
     public class IStorageSensorEq : IEqualityComparer<IStorageSensor>

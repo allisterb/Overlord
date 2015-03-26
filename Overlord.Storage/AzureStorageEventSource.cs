@@ -12,7 +12,7 @@ using Microsoft.WindowsAzure.Storage;
 
 namespace Overlord.Storage
 {
-    [EventSource(Name = "Storage")]
+    [EventSource(Name = "AzureStorage")]
     public class AzureStorageEventSource : EventSource 
     {
         public class Keywords
@@ -28,11 +28,7 @@ namespace Overlord.Storage
           public const EventTask Configure = (EventTask)1;
           public const EventTask Connect = (EventTask)2;
           public const EventTask WriteTable = (EventTask)4;
-          public const EventTask ReadTable = (EventTask)8;
-          public const EventTask AddDeviceEntity = (EventTask)16;
-          public const EventTask FindDeviceEntity = (EventTask)32;
-          public const EventTask UpdateDeviceEntity = (EventTask)64;
-          public const EventTask DeleteDeviceEntity = (EventTask)128;
+          public const EventTask ReadTable = (EventTask)8;          
         }
 
         private static AzureStorageEventSource _log = new AzureStorageEventSource();
@@ -40,8 +36,8 @@ namespace Overlord.Storage
         public static AzureStorageEventSource Log { get { return _log; } }
  
     
-        [Event(1, Message = "FAILURE: Read Azure configuration: {0}\nException : {1}.", Task = Tasks.Configure, 
-            Level = EventLevel.Critical, Keywords = Keywords.Diagnostic)]
+        [Event(1, Message = "FAILURE: Read Azure configuration: {0}\nException : {1}.", 
+            Task = Tasks.Configure, Level = EventLevel.Critical, Keywords = Keywords.Diagnostic)]
         internal void ConfigurationFailure(string message, string exception)
         {
             if (this.IsEnabled()) this.WriteEvent(1, message, exception);
@@ -55,29 +51,31 @@ namespace Overlord.Storage
         }
 
          
-        [Event(3, Message = "FAILURE: Connect to Azure servers: {0}\nException: {1}", Task = Tasks.Connect, Level = EventLevel.Error,
-            Keywords = Keywords.Diagnostic | Keywords.Table)]
+        [Event(3, Message = "FAILURE: Connect to Azure servers: {0}\nException: {1}", 
+            Task = Tasks.Connect, Level = EventLevel.Error, Keywords = Keywords.Diagnostic | Keywords.Table)]
         internal void ConnectFailure(string message, string exception)
         {
             this.WriteEvent(3, message, exception);
         }
           
-        [Event(4, Message = "SUCCESS: Connect to Azure servers: {0}", Task = Tasks.Connect, Level = EventLevel.Informational, 
+        [Event(4, Message = "SUCCESS: Connect to Azure servers: {0}", 
+            Task = Tasks.Connect, Level = EventLevel.Informational, 
             Keywords = Keywords.Diagnostic | Keywords.Table)]
         internal void ConnectSuccess(string message)
         {
             this.WriteEvent(4, message);
         }
 
-        [Event(5, Message = "FAILURE: Write Azure Table Storage: {0}\nException: {1}", Task = Tasks.WriteTable, Level = EventLevel.Error,
+        [Event(5, Message = "FAILURE: Write Azure Table Storage: {0}\nException: {1}", 
+            Task = Tasks.WriteTable, Level = EventLevel.Error, 
             Keywords = Keywords.Diagnostic | Keywords.Table)]
         internal void WriteTableFailure(string message, string exception)
         {
             this.WriteEvent(5, message, exception);
         }
 
-        [Event(6, Message = "SUCCESS: Write Azure Table Storage: {0}", Task = Tasks.WriteTable, Level = EventLevel.Informational,
-            Keywords = Keywords.Diagnostic | Keywords.Table)]
+        [Event(6, Message = "SUCCESS: Write Azure Table Storage: {0}", Task = Tasks.WriteTable, 
+            Level = EventLevel.Informational, Keywords = Keywords.Diagnostic | Keywords.Table)]
         internal void WriteTableSuccess(string message)
         {
             this.WriteEvent(6, message);
@@ -90,7 +88,8 @@ namespace Overlord.Storage
             this.WriteEvent(7, message, exception);
         }
 
-        [Event(8, Message = "SUCCESS: Read Azure Table Storage: {0}", Task = Tasks.ReadTable, Level = EventLevel.Informational,
+        [Event(8, Message = "SUCCESS: Read Azure Table Storage: {0}", 
+            Task = Tasks.ReadTable, Level = EventLevel.Informational,
             Keywords = Keywords.Diagnostic | Keywords.Table)]
         internal void ReadTableSuccess(string message)
         {

@@ -39,9 +39,12 @@ namespace Overlord.Testing
         {
             OverlordIdentity.InitializeAnonymousIdentity();
             AzureStorage storage = new AzureStorage();
-            Assert.NotNull(storage.AuthenticateAnonymousUser(AzureStorageTests.user_01_id.UrnToId(), "admin"));
-            Assert.False(OverlordIdentity.HasClaim(Authentication.Role, UserRole.Anonymous));
+            Assert.False(storage.AuthenticateAnonymousUser(AzureStorageTests.user_01_id.UrnToId(), "foo"));
+            Assert.False(OverlordIdentity.HasClaim(Authentication.Role, UserRole.User));
+            Assert.True(storage.AuthenticateAnonymousUser(AzureStorageTests.user_01_id.UrnToId(), 
+                AzureStorageTests.user_01_token));
             Assert.True(OverlordIdentity.HasClaim(Authentication.Role, UserRole.User));
+            Assert.False(OverlordIdentity.HasClaim(Authentication.Role, UserRole.Anonymous));
         }
 
         [Fact]
@@ -79,8 +82,8 @@ namespace Overlord.Testing
         {
             OverlordIdentity.InitializeAnonymousIdentity();                            
             AzureStorage storage = new AzureStorage();
-            Assert.True(storage.AuthenticateAnonymousDevice(AzureStorageTests.device_01_id.UrnToId(), 
-                "XUnit_CanFindAzureStorageTests.device_Test_Token"));
+            Assert.True(storage.AuthenticateAnonymousDevice(AzureStorageTests.device_01_id.UrnToId(),
+                AzureStorageTests.device_01_token));
             Assert.False(OverlordIdentity.HasClaim(Authentication.Role, UserRole.Anonymous));
             Assert.True(OverlordIdentity.HasClaim(Authentication.Role, UserRole.Device));
         }

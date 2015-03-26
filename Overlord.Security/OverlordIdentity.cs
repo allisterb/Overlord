@@ -64,6 +64,7 @@ namespace Overlord.Security
             user_identity.AddClaim(new Claim(Authentication.Role, UserRole.Anonymous));
         }
         
+        
         public static void InitializeUserIdentity(string id, string token, IList<string> devices)
         {
             InitalizeIdentity();

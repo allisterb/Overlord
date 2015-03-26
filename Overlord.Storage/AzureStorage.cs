@@ -8,7 +8,6 @@ using System.IdentityModel.Services;
 using System.Text;
 using System.Threading.Tasks;
 
-using Microsoft.WindowsAzure;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Queue;
@@ -30,7 +29,7 @@ using Overlord.Storage.Common;
 
 namespace Overlord.Storage
 {
-    public class AzureStorage: IStorage
+    public partial class AzureStorage: IStorage
     {        
         #region Private fields
         ObservableEventListener event_log_listener = new ObservableEventListener();
@@ -502,10 +501,12 @@ namespace Overlord.Storage
                 device.ETag = result.Etag;
                 user.Devices.Add(device.Id);
                 TableOperation update_user_operation = TableOperation.Merge(CreateUserTableEntity(user));
+                result = this.UsersTable.Execute(update_user_operation);
+                user.ETag = result.Etag;
                 Log.WriteTableSuccess(string.
                     Format("Added device entity: {0}, Id: {1}, Token {2} to Devices table.", 
                         device.Name, device.Id.ToUrn(), device.Token));
-                result = this.UsersTable.Execute(update_user_operation);                
+                
                 Log.WriteTableSuccess(string.Format("Added device entity: {0}, Id: {1}, to User entity {2}.", 
                     device.Name, device.Id.ToUrn(), device.Token, user.Id.ToUrn()));
                 return device;
@@ -557,8 +558,10 @@ namespace Overlord.Storage
             Operation = StorageAction.FindDevice)]
         public IStorageDevice FindDevice()
         {
-            return this.FindDevice(OverlordIdentity.CurrentDeviceId.ToGuid(), 
+            IStorageDevice device = this.FindDevice(OverlordIdentity.CurrentDeviceId.ToGuid(), 
                 OverlordIdentity.CurrentDeviceToken);
+            if (device == null) throw new NullReferenceException("Could not find current device id.");
+            return device;
         }
 
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, Operation = StorageAction.UpdateDevice)]
@@ -590,9 +593,10 @@ namespace Overlord.Storage
         public IStorageSensor AddSensor(string sensor_name, string sensor_units, 
             IList<Guid> sensor_channels, IList<Guid> sensor_alerts)
         {
+            if (!sensor_name.IsVaildSensorName()) throw new ArgumentException(
+                string.Format("Invalid sensor name: {0}", sensor_name));
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
-            IStorageDevice device = this.FindDevice();
-            if (device == null) throw new NullReferenceException("Could not find current device id.");
+            IStorageDevice device = this.FindDevice();            
             IStorageSensor sensor = new IStorageSensor()
             {
                 DeviceId  = device.Id,
@@ -640,9 +644,7 @@ namespace Overlord.Storage
             {
                 Id = Guid.NewGuid(),                                
                 Name = channel_name,
-                Description = channel_description,
-                Units = channel_description
-                
+                Description = channel_description,                                
             };
             try
             {
@@ -707,7 +709,7 @@ namespace Overlord.Storage
         #region Internal static methods
         internal static DynamicTableEntity CreateUserTableEntity(IStorageUser user)
         {
-            var dictionary = new Dictionary<string, EntityProperty>();
+            Dictionary<string, EntityProperty> dictionary = new Dictionary<string, EntityProperty>();
             dictionary.Add("UserName", new EntityProperty(user.UserName));
             dictionary.Add("Devices", new EntityProperty(JsonConvert.SerializeObject(user.Devices)));
           
@@ -716,7 +718,7 @@ namespace Overlord.Storage
         
         internal static DynamicTableEntity CreateDeviceTableEntity(IStorageDevice device)
         {
-            var dictionary = new Dictionary<string, EntityProperty>();
+            Dictionary<string, EntityProperty> dictionary = new Dictionary<string, EntityProperty>();
             dictionary.Add("UserId", new EntityProperty(device.UserId));
             dictionary.Add("Name", new EntityProperty(device.Name));
             dictionary.Add("Description", new EntityProperty(device.Description));
@@ -778,8 +780,7 @@ namespace Overlord.Storage
             var dictionary = new Dictionary<string, EntityProperty>();
             dictionary.Add("Name", new EntityProperty(channel.Name));
             dictionary.Add("Description", new EntityProperty(JsonConvert.
-                SerializeObject(channel.Description)));
-            dictionary.Add("Units", new EntityProperty(JsonConvert.SerializeObject(channel.Units)));
+                SerializeObject(channel.Description)));            
             return new DynamicTableEntity(channel.Id.ToUrn(), channel.Id.ToUrn(), channel.ETag,
                 dictionary);
         }
