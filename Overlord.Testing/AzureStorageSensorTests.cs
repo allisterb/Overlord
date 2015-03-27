@@ -29,12 +29,14 @@ namespace Overlord.Testing
         public void CanAddSensor()
         {
             AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitializeDeviceIdentity(AzureStorageTests.device_02_id.UrnToId(), AzureStorageTests.device_02_token, new string[0]);
+            OverlordIdentity.InitializeAnonymousIdentity();
+            storage.AuthenticateAnonymousDevice(TestData.device_02_id.UrnToId(), 
+                TestData.device_02_token);            
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddSensor);
-            IStorageSensor sensor = storage.AddSensor(AzureStorageTests.sensor_01_name, AzureStorageTests.sensor_01_unit, null, null);
+            IStorageSensor sensor = storage.AddSensor(TestData.sensor_01_name, TestData.sensor_01_unit, null, null);
             Assert.NotNull(sensor);
-            Assert.Equal(sensor.Name, AzureStorageTests.sensor_01_name);
-            Assert.Equal(sensor.Unit, AzureStorageTests.sensor_01_unit);
+            Assert.Equal(sensor.Name, TestData.sensor_01_name);
+            Assert.Equal(sensor.Unit, TestData.sensor_01_unit);
         }
     }
 }

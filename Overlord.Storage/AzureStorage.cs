@@ -40,10 +40,12 @@ namespace Overlord.Storage
         private CloudQueueClient _QueueClient;
         private CloudTable _UsersTable;
         private CloudTable _DevicesTable;
+        private CloudTable _DeviceChannelTable;
         private CloudTable _SensorReadingsTable;
         private CloudTable _ChannelsTable;
         private CloudTable _AlertsTable;
-        private CloudTable _MessagesTable;        
+        private CloudTable _MessagesTable;
+        private CloudQueue _ReadingsQueue;
         #endregion
 
         #region Constructors
@@ -107,7 +109,7 @@ namespace Overlord.Storage
                     try
                     {
                         this._TableClient = this.StorageAccount.CreateCloudTableClient();
-                        Log.ConnectSuccess("Couldn't create Table Client.");
+                        Log.ConnectSuccess("Created Table Client.");
                     }
                     catch (StorageException e)
                     {
@@ -199,6 +201,35 @@ namespace Overlord.Storage
             }
         }
 
+        private CloudTable DeviceChannelTable
+        {
+            get
+            {
+                if (this._DeviceChannelTable == null)
+                {
+                    try
+                    {
+                        this._DeviceChannelTable = this.TableClient
+                            .GetTableReference("Channel_" + 
+                                OverlordIdentity.CurrentDeviceId.IdToTableName());
+                        this._DeviceChannelTable.CreateIfNotExists();
+                    }
+                    catch (StorageException e)
+                    {
+                        Log.ConnectFailure("Failed to connect to " + 
+                            "Channel_" + OverlordIdentity.CurrentDeviceId.IdToTableName() +
+                        "device channel table.", e);
+                        throw;
+                    }
+                }
+                return this._DeviceChannelTable;
+            }
+            set
+            {
+                this._DeviceChannelTable = value;
+            }
+        }
+
         private CloudTable SensorReadingsTable
         {
             get
@@ -274,28 +305,28 @@ namespace Overlord.Storage
             }
         }
 
-        private CloudTable MessagesTable
+        private CloudQueue ReadingsQueue
         {
             get
             {
-                if (this._MessagesTable == null)
+                if (this._ReadingsQueue == null)
                 {
                     try
                     {
-                        this._MessagesTable = this.TableClient.GetTableReference("Messages");
-                        this._MessagesTable.CreateIfNotExists();
+                        this._ReadingsQueue = this.QueueClient.GetQueueReference("Readings");
+                        this._ReadingsQueue.CreateIfNotExists();
                     }
                     catch (StorageException e)
                     {
-                        Log.ConnectFailure("Failed to connect to Messages table.", e);
+                        Log.ConnectFailure("Failed to connect to Readings queue.", e);
                         throw;
                     }
                 }
-                return this._MessagesTable;
+                return this._ReadingsQueue;
             }
             set
             {
-                this._MessagesTable = value;
+                this._ReadingsQueue = value;
             }
         }        
         #endregion
@@ -694,54 +725,7 @@ namespace Overlord.Storage
             }
         }
      
-        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device)]
-        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
-            Operation = StorageAction.AddSensorReading)]
-        public IStorageSensorReading AddSensorReading(string sensor_name, DateTime time, object value)
-        {
-            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
-            IStorageDevice device = this.FindDevice();
-            IStorageSensorReading reading = new IStorageSensorReading()
-            {
-                DeviceId = device.Id,
-                SensorName = sensor_name,
-                Time = time,
-                Reading = value
-            };
-            TableOperation insert_operation = TableOperation
-                .Insert(AzureStorage.CreateSensorReadingEntity(reading));
-            TableResult result;
-            try
-            {
-                result = this.SensorReadingsTable.Execute(insert_operation);
-                    Log.WriteTableSuccess(string.Format
-                       ("Added sensor reading entity: Sensor Name: {0}, Partition: {1}, RowKey: {2}, " +
-                        "Type: {3}, Value: {4} ", reading.SensorName, reading.Time.GeneratePartitionKey(), 
-                         string.Format(CultureInfo.InvariantCulture, SensorReadingKeyFormat,
-                             reading.DeviceId.ToUrn() + ":",
-                             reading.SensorName + ":",
-                             reading.Time.GetTicks()), 
-                             reading.SensorName.ToSensorType().ToString() , reading.Reading));
-                reading.ETag = result.Etag;
-                return reading;                
-            }
-            catch (Exception e)
-            {
-                Log.WriteTableFailure(string.Format
-                   ("Failed to add sensor reading entity: Sensor Name: {0}, Partition: {1}, RowKey: {2}, " +
-                        "Type: {3}, Value: {4} ", reading.SensorName, reading.Time.GeneratePartitionKey(), 
-                         string.Format(CultureInfo.InvariantCulture, SensorReadingKeyFormat,
-                             reading.DeviceId.ToUrn() + ":",
-                             reading.SensorName + ":",
-                             reading.Time.GetTicks()), 
-                             reading.SensorName.ToSensorType().ToString() , reading.Reading), e);
-                throw;
-            }
-            finally
-            {
-                OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddSensorReading);
-            }
-        }
+       
         #endregion
 
         #region Internal methods

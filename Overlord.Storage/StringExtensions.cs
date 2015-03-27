@@ -22,6 +22,16 @@ namespace Overlord.Storage
             }
         }
 
+        public static string IdToTableName(this string s)
+        {
+            return s.Replace("-", "_");
+        }
+
+        public static string TableNameToId(this string s)
+        {
+            return s.Replace("_", "-");
+        }
+
         public static string UrnToId(this string urn)
         {
             string prefix = "urn:uuid:";

@@ -20,32 +20,32 @@ namespace Overlord.Testing
         private void InitialiseTestData()
         {
             AzureStorage storage = new AzureStorage();            
-            OverlordIdentity.InitializeUserIdentity(AzureStorageTests.user_02_id, AzureStorageTests.user_02_token, new string[0]);
+            OverlordIdentity.InitializeUserIdentity(TestData.user_02_id, TestData.user_02_token, new string[0]);
             
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
-            IStorageUser user = storage.FindUser(AzureStorageTests.user_02_id.UrnToGuid(), AzureStorageTests.user_02_token);
+            IStorageUser user = storage.FindUser(TestData.user_02_id.UrnToGuid(), TestData.user_02_token);
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDevice);
-            IStorageDevice device_01 = storage.AddDevice(user, AzureStorageTests.device_01_name, AzureStorageTests.device_01_token, null, AzureStorageTests.device_01_id);
+            IStorageDevice device_01 = storage.AddDevice(user, TestData.device_01_name, TestData.device_01_token, null, TestData.device_01_id);
 
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
             //user = storage.FindUser(AzureStorageTests.user_02_id.UrnToGuid(), AzureStorageTests.user_02_token);            
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDevice);
-            IStorageDevice device_02 = storage.AddDevice(user, AzureStorageTests.device_02_name, AzureStorageTests.device_02_token, null, AzureStorageTests.device_02_id);
+            IStorageDevice device_02 = storage.AddDevice(user, TestData.device_02_name, TestData.device_02_token, null, TestData.device_02_id);
             
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
             //user = storage.FindUser(AzureStorageTests.user_02_id.UrnToGuid(), AzureStorageTests.user_02_token);
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDevice);
-            IStorageDevice device_03 = storage.AddDevice(user, AzureStorageTests.device_03_name, AzureStorageTests.device_03_token, null, AzureStorageTests.device_03_id);
+            IStorageDevice device_03 = storage.AddDevice(user, TestData.device_03_name, TestData.device_03_token, null, TestData.device_03_id);
         }
         
         [Fact]
         public void CanParseUrns()
         {
-            Guid g = AzureStorageTests.device_01_id.UrnToGuid();
+            Guid g = TestData.device_01_id.UrnToGuid();
             Assert.Equal(Guid.ParseExact("9ac31883-f0e3-4666-a05f-6add31beb8f4", "D"), g);
             Assert.Equal("urn:uuid:9ac31883-f0e3-4666-a05f-6add31beb8f4".UrnToGuid(), 
                 Guid.ParseExact("9ac31883-f0e3-4666-a05f-6add31beb8f4", "D"));
-            Assert.Equal(AzureStorageTests.device_01_id.UrnToId(), g.ToString("D"));
+            Assert.Equal(TestData.device_01_id.UrnToId(), g.ToString("D"));
         }
 
                         
@@ -53,11 +53,11 @@ namespace Overlord.Testing
         public void CanAddDevice()
         {                        
             AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitializeUserIdentity(AzureStorageTests.user_02_id, 
-                AzureStorageTests.user_02_token, new string[0]);  
+            OverlordIdentity.InitializeUserIdentity(TestData.user_02_id, 
+                TestData.user_02_token, new string[0]);  
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
-            IStorageUser user = storage.FindUser(AzureStorageTests.user_02_id.UrnToGuid(), 
-                AzureStorageTests.user_02_token);
+            IStorageUser user = storage.FindUser(TestData.user_02_id.UrnToGuid(), 
+                TestData.user_02_token);
             Assert.NotNull(user);        
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDevice);
             IStorageDevice device = storage.AddDevice(user, "xUnit_CanAddDeviceTest_Name",
@@ -74,12 +74,12 @@ namespace Overlord.Testing
         {
             //InitialiseTestData();
             AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitializeUserIdentity(AzureStorageTests.user_02_id, AzureStorageTests.user_02_token, new string[0]);
+            OverlordIdentity.InitializeUserIdentity(TestData.user_02_id, TestData.user_02_token, new string[0]);
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
-            IStorageUser user = storage.FindUser(AzureStorageTests.user_01_id.UrnToGuid(), AzureStorageTests.user_01_token);
+            IStorageUser user = storage.FindUser(TestData.user_01_id.UrnToGuid(), TestData.user_01_token);
             Assert.NotNull(user);          
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
-            IStorageDevice device = storage.FindDevice(AzureStorageTests.device_01_id.UrnToGuid(), AzureStorageTests.device_01_token);            
+            IStorageDevice device = storage.FindDevice(TestData.device_01_id.UrnToGuid(), TestData.device_01_token);            
             Assert.NotNull(device);
         }
 

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Security;
 using System.Threading.Tasks;
 
 using Xunit;
@@ -19,7 +20,7 @@ namespace Overlord.Testing
         [Fact]
         public void CanParseUrns()
         {
-            Guid g = AzureStorageTests.user_01_id.UrnToGuid();
+            Guid g = TestData.user_01_id.UrnToGuid();
             Assert.Equal(Guid.ParseExact("d155074f-4e85-4cb5-a597-8bfecb0dfc04", "D"), g);
             Assert.Equal("urn:uuid:d155074f-4e85-4cb5-a597-8bfecb0dfc04".UrnToGuid(), 
                 Guid.ParseExact("d155074f-4e85-4cb5-a597-8bfecb0dfc04", "D"));
@@ -29,9 +30,9 @@ namespace Overlord.Testing
         public void CanAuthorizeAuthenticateAnonymousUser()
         {
             AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitializeUserIdentity(AzureStorageTests.user_01_id.UrnToId(), "admin", new string[0]);
+            OverlordIdentity.InitializeUserIdentity(TestData.user_01_id.UrnToId(), "admin", new string[0]);
             Assert.Throws(typeof(System.Security.SecurityException), 
-                () => storage.AuthenticateAnonymousUser(AzureStorageTests.user_01_id, "admin"));
+                () => storage.AuthenticateAnonymousUser(TestData.user_01_id, "admin"));
         }
 
         [Fact]
@@ -39,10 +40,10 @@ namespace Overlord.Testing
         {
             OverlordIdentity.InitializeAnonymousIdentity();
             AzureStorage storage = new AzureStorage();
-            Assert.False(storage.AuthenticateAnonymousUser(AzureStorageTests.user_01_id.UrnToId(), "foo"));
+            Assert.False(storage.AuthenticateAnonymousUser(TestData.user_01_id.UrnToId(), "foo"));
             Assert.False(OverlordIdentity.HasClaim(Authentication.Role, UserRole.User));
-            Assert.True(storage.AuthenticateAnonymousUser(AzureStorageTests.user_01_id.UrnToId(), 
-                AzureStorageTests.user_01_token));
+            Assert.True(storage.AuthenticateAnonymousUser(TestData.user_01_id.UrnToId(), 
+                TestData.user_01_token));
             Assert.True(OverlordIdentity.HasClaim(Authentication.Role, UserRole.User));
             Assert.False(OverlordIdentity.HasClaim(Authentication.Role, UserRole.Anonymous));
         }
@@ -50,7 +51,7 @@ namespace Overlord.Testing
         [Fact]
         public void CanAuthorizeAddUser()
         {
-            OverlordIdentity.InitializeUserIdentity(AzureStorageTests.user_01_id.UrnToId(), "admin", new string[0]);
+            OverlordIdentity.InitializeUserIdentity(TestData.user_01_id.UrnToId(), "admin", new string[0]);
             AzureStorage storage = new AzureStorage();
             Assert.Throws(typeof(System.Security.SecurityException), () => 
                 storage.AddUser("XUnit_CanAuthorizeAddAzureStorageTests.user_Test_Name", "XUnit_CanAuthorizeAddAzureStorageTests.user_Test_Token", 
@@ -60,12 +61,12 @@ namespace Overlord.Testing
         [Fact]
         public void CanAuthorizeDeleteUser()
         {
-            OverlordIdentity.InitializeUserIdentity(AzureStorageTests.user_01_id.UrnToId(), "admin", new string[0]);            
+            OverlordIdentity.InitializeUserIdentity(TestData.user_01_id.UrnToId(), "admin", new string[0]);            
             AzureStorage storage = new AzureStorage();
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
             IStorageUser user = storage.FindUser("d155074f-4e85-4cb5-a597-8bfecb0dfc04".ToGuid(), "admin");
             Assert.Throws(typeof(System.Security.SecurityException), () => storage.DeleteUser(user));
-            OverlordIdentity.InitializeAdminUserIdentity(AzureStorageTests.user_01_id.UrnToId(), "admin", new string[0]);                        
+            OverlordIdentity.InitializeAdminUserIdentity(TestData.user_01_id.UrnToId(), "admin", new string[0]);                        
             Assert.Throws(typeof(System.Security.SecurityException), () => storage.DeleteUser(user));
         }
 
@@ -82,8 +83,8 @@ namespace Overlord.Testing
         {
             OverlordIdentity.InitializeAnonymousIdentity();                            
             AzureStorage storage = new AzureStorage();
-            Assert.True(storage.AuthenticateAnonymousDevice(AzureStorageTests.device_01_id.UrnToId(),
-                AzureStorageTests.device_01_token));
+            Assert.True(storage.AuthenticateAnonymousDevice(TestData.device_01_id.UrnToId(),
+                TestData.device_01_token));
             Assert.False(OverlordIdentity.HasClaim(Authentication.Role, UserRole.Anonymous));
             Assert.True(OverlordIdentity.HasClaim(Authentication.Role, UserRole.Device));
         }
@@ -96,15 +97,23 @@ namespace Overlord.Testing
                 storage.AddSensor("foo", "bar", null, null));
             
             //Throws security exception even if correct identity.
-            OverlordIdentity.InitializeDeviceIdentity(AzureStorageTests.device_01_id.UrnToId(), AzureStorageTests.device_01_token, new string[0]);
+            OverlordIdentity.InitializeDeviceIdentity(TestData.device_01_id.UrnToId(), TestData.device_01_token, new string[0]);
             Assert.Throws(typeof(System.Security.SecurityException), () =>
                 storage.AddSensor("foo", "bar", null, null));            
             
             //Doesn't throw security exception when proper permission is present.
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddSensor);
-            IStorageSensor s = storage.AddSensor(AzureStorageTests.sensor_01_name, "bar", null, null);
+            IStorageSensor s = storage.AddSensor(TestData.sensor_01_name, "bar", null, null);
             Assert.NotNull(s);
-            Assert.True(s.Name == AzureStorageTests.sensor_01_name);
+            Assert.True(s.Name == TestData.sensor_01_name);
+        }
+
+        [Fact]        
+        public void CanAuthorizeAddSensorReading()
+        {
+            AzureStorage storage = new AzureStorage();
+            Assert.Throws(typeof(SecurityException), () => storage
+                .AddSensorReading("S1", DateTime.Now, DateTime.Now));
         }
 
     }

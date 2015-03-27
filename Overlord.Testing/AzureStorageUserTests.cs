@@ -18,20 +18,20 @@ namespace Overlord.Testing
         private void InitialiseTestData()
         {
             AzureStorage storage = new AzureStorage();
-            OverlordIdentity.InitializeAdminUserIdentity(AzureStorageTests.user_01_id, AzureStorageTests.user_01_token, new string[0]);
+            OverlordIdentity.InitializeAdminUserIdentity(TestData.user_01_id, TestData.user_01_token, new string[0]);
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddUser);
-            IStorageUser user_01 = storage.AddUser(AzureStorageTests.user_01_name, AzureStorageTests.user_01_token, null, AzureStorageTests.user_01_id);
+            IStorageUser user_01 = storage.AddUser(TestData.user_01_name, TestData.user_01_token, null, TestData.user_01_id);
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddUser);
-            IStorageUser user_02 = storage.AddUser(AzureStorageTests.user_02_name, AzureStorageTests.user_02_token, null, AzureStorageTests.user_02_id);
+            IStorageUser user_02 = storage.AddUser(TestData.user_02_name, TestData.user_02_token, null, TestData.user_02_id);
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddUser);
-            IStorageUser user_03 = storage.AddUser(AzureStorageTests.user_03_name, AzureStorageTests.user_03_token, null, AzureStorageTests.user_03_id);            
+            IStorageUser user_03 = storage.AddUser(TestData.user_03_name, TestData.user_03_token, null, TestData.user_03_id);            
         }
 
         [Fact]
         public void CanAddUser()
         {
-            OverlordIdentity.InitializeAdminUserIdentity(AzureStorageTests.user_01_id, 
-                AzureStorageTests.user_01_token, new string[0]);
+            OverlordIdentity.InitializeAdminUserIdentity(TestData.user_01_id, 
+                TestData.user_01_token, new string[0]);
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddUser);
             AzureStorage storage = new AzureStorage();
             IStorageUser user = storage.AddUser("xUnit_CanAddUserTest_Name", "xUnit_CanAddUserTest_Token", null);
@@ -46,10 +46,10 @@ namespace Overlord.Testing
             //InitialiseTestData();
             AzureStorage storage = new AzureStorage();
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
-            IStorageUser user = storage.FindUser(AzureStorageTests.user_02_id.UrnToGuid(), AzureStorageTests.user_02_token);
+            IStorageUser user = storage.FindUser(TestData.user_02_id.UrnToGuid(), TestData.user_02_token);
             Assert.NotNull(user);
-            Assert.Equal(user.UserName, AzureStorageTests.user_02_name);
-            Assert.Equal(user.Token, AzureStorageTests.user_02_token);
+            Assert.Equal(user.UserName, TestData.user_02_name);
+            Assert.Equal(user.Token, TestData.user_02_token);
         } 
     }
 }
