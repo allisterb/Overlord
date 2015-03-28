@@ -24,11 +24,10 @@ namespace Overlord.Testing
             Assert.False(TestData.sensor_03_reading_01.GetType() == TestData.sensor_01_name.ToSensorType());
             Assert.True(TestData.sensor_02_reading_01.GetType() ==
                 TestData.sensor_02_name.ToSensorType());
-            Assert.False(TestData.sensor_03_reading_01.GetType() == TestData.sensor_02_name.ToSensorType());
-
-                       
+            Assert.False(TestData.sensor_03_reading_01.GetType() == TestData.sensor_02_name.ToSensorType());                       
         }
-        
+
+                
         [Fact]
         public void CanAddDeviceReading()
         {
@@ -41,9 +40,10 @@ namespace Overlord.Testing
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDeviceReading);
             Dictionary<string, object> sensor_values = new Dictionary<string,object>() 
             {
-                {TestData.sensor_01_name, TestData.sensor_01_reading_01} 
+                {TestData.sensor_01_name, TestData.GenerateRandomString(43)},
+                {TestData.sensor_03_name, TestData.GenerateRandomTime(null, null, null)}
             };
             storage.AddDeviceReading(DateTime.Now, sensor_values);            
-        }
+        }        
     }
 }

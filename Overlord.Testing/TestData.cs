@@ -68,6 +68,31 @@ namespace Overlord.Testing
         public static object sensor_04_reading_01 = 15.7D;
         public static string sensor_04_unit = "On/Off";
 
-                               
+        public static Random rng = new Random();
+        /// <summary>
+        /// Genarate a random string of characters. Original code by Dan Rigby: 
+        /// http://stackoverflow.com/questions/1344221/how-can-i-generate-random-alphanumeric-strings-in-c
+        /// </summary>
+        /// <param name="length">Length of string to return.</param>
+        /// <returns></returns>
+        public static string GenerateRandomString(int length)
+        {
+            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var stringChars = new char[length];            
+            for (int i = 0; i < stringChars.Length; i++)
+            {
+                stringChars[i] = chars[rng.Next(chars.Length)];
+            }
+
+            return new String(stringChars);
+        }
+        
+        public static DateTime GenerateRandomTime(int? year, int? month, int? day )
+        {
+            int y = year.HasValue ? year.Value : DateTime.Now.Year;
+            int m = month.HasValue ? month.Value : DateTime.Now.Month;
+            int d = day.HasValue ? day.Value : DateTime.Now.Day;
+            return new DateTime(y, m, d, rng.Next(24), rng.Next(60), rng.Next(60));
+        }
     }
 }

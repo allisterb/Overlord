@@ -92,8 +92,7 @@ namespace Overlord.Storage
                    .Select(v => v.Key + ":" + v.Value).Aggregate((a, b) => { return a + " " + b +","; });
                 throw new ArgumentException(string.Format("Device reading has bad sensor values: {0}", 
                     bad_sensors));
-            }
-                
+            }                
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
             IStorageDevice device = this.GetCurrentDevice();
             IStorageDeviceReading reading = new IStorageDeviceReading()
@@ -139,6 +138,7 @@ namespace Overlord.Storage
             }
         }
 
+        /*
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device)]
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
             Operation = StorageAction.GetDeviceReading)]
@@ -152,11 +152,20 @@ namespace Overlord.Storage
             .GeneratePartitionKey();
             string end_pk = new DateTime(end.Year, end.Month, end.Day, end.Hour, end.Minute, 0)
             .GeneratePartitionKey();
+            for (DateTime d = start_minute; d <= end_minute; d.AddMinutes(1))
+            {
+                TableOperation retrieve_operation = TableOperation
+                .Retrieve<IStorageDeviceReading>(d.GeneratePartitionKey(), 
+                string.Format(CultureInfo.InvariantCulture, DeviceReadingKeyFormat,
+                           device.Id, .Time.GetTicks())
+            //
+            }
             //TableOperation retrieve_operation = TableOperation
             //    .Retrieve<IStorageSensorReading>(start_pk, )
             //TimeSpan range = end - start;
             //range.
             return new SortedList<IStorageDeviceReading, IComparer<DateTime>> ();
         }
+         * */
     }        
 }
