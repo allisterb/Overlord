@@ -33,7 +33,8 @@ namespace Overlord.Security.Claims
 
         public const string AddSensor = "urn:Overlord/Identity/Claims/Sensor/Create";
 
-        public const string AddSensorReading = "urn:Overlord/Identity/Claims/SensorReading/Create";
+        public const string AddDeviceReading = "urn:Overlord/Identity/Claims/DeviceReading/Create";
+        public const string GetDeviceReading = "urn:Overlord/Identity/Claims/DeviceReading/Retrieve";
 
         public const string AddChannel = "urn:Overlord/Identity/Claims/Channel/Create";
 

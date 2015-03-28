@@ -30,89 +30,133 @@ using Overlord.Storage.Common;
 namespace Overlord.Storage
 {
     public partial class AzureStorage
-    {        
-        private const string SensorReadingKeyFormat = "{0}";
-        private const string SensorReadingColumnFormat = "{0}_{1:X5}";
-
-        public static DynamicTableEntity CreateSensorReadingEntity(IStorageSensorReading reading)
+    {
+        private const string DeviceReadingKeyFormat = "{0}_{1:X5}";        
+        public static DynamicTableEntity CreateSensorReadingEntity(IStorageDeviceReading reading)
         {
             Dictionary<string, EntityProperty> dictionary = new Dictionary<string, EntityProperty>();
-            //dictionary.Add("DeviceId", new EntityProperty(reading.DeviceId.ToUrn()));
-            //dictionary.Add("Time", new EntityProperty(reading.Time));
-            //dictionary.Add("SensorName", new EntityProperty(reading.SensorName));
-            string name = string.Format(CultureInfo.InvariantCulture, SensorReadingColumnFormat,
-                reading.SensorName, reading.Time.GetTicks());
-            if (reading.SensorName.ToSensorType() == typeof(string))
+            foreach (KeyValuePair<string, object> r in reading.SensorValues)
             {
-                
-                dictionary.Add(name,new EntityProperty((string)reading.Reading));
+                if (r.Key.ToSensorType() == typeof(string))
+                {
+                    dictionary.Add(r.Key, new EntityProperty((string)r.Value));
+                    continue;
+                }
+                if (r.Key.ToSensorType() == typeof(int))
+                {
+                    dictionary.Add(r.Key, new EntityProperty((int)r.Value));
+                    continue;
+                }
+                if (r.Key.ToSensorType() == typeof(double))
+                {
+                    dictionary.Add(r.Key, new EntityProperty((double)r.Value));
+                    continue;
+                }
+                if (r.Key.ToSensorType() == typeof(DateTime))
+                {
+                    dictionary.Add(r.Key, new EntityProperty((DateTime)r.Value));
+                    continue;
+                }
+                if (r.Key.ToSensorType() == typeof(bool))
+                {
+                    dictionary.Add(r.Key, new EntityProperty((bool)r.Value));
+                    continue;
+                }
+                if (r.Key.ToSensorType() == typeof(byte[]))
+                {
+                    dictionary.Add(r.Key, new EntityProperty((byte[])r.Value));
+                    continue;
+                }
             }
-            if (reading.SensorName.ToSensorType() == typeof(int)) dictionary.Add(name, 
-                new EntityProperty((int)reading.Reading));
-            if (reading.SensorName.ToSensorType() == typeof(double)) dictionary.Add(name, 
-                new EntityProperty((double)reading.Reading));
-            if (reading.SensorName.ToSensorType() == typeof(DateTime)) dictionary.Add(name, 
-                new EntityProperty((DateTime)reading.Reading));
-            if (reading.SensorName.ToSensorType() == typeof(bool)) dictionary.Add(name, 
-                new EntityProperty((bool)reading.Reading));
-            if (reading.SensorName.ToSensorType() == typeof(byte[])) dictionary.Add(name, 
-                new EntityProperty((byte[])reading.Reading));
-            return new DynamicTableEntity(reading.Time.GeneratePartitionKey(), 
-                string.Format(CultureInfo.InvariantCulture, SensorReadingKeyFormat, reading.DeviceId.ToUrn(),
-                    reading.SensorName), null, dictionary);            
+            return new DynamicTableEntity(reading.Time.GeneratePartitionKey(),
+                string.Format(CultureInfo.InvariantCulture, DeviceReadingKeyFormat, reading.DeviceId.ToUrn(),
+                    reading.Time.GetTicks()), null, dictionary);                        
         }
 
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device)]
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
-            Operation = StorageAction.AddSensorReading)]
-        public IStorageSensorReading AddSensorReading(string sensor_name, DateTime time, object val)
+            Operation = StorageAction.AddDeviceReading)]
+        public IStorageDeviceReading AddDeviceReading(DateTime time, IDictionary<string, object> values)
         {
-            if (val.GetType() != sensor_name.ToSensorType()) throw
-                    new ArgumentException("Sensor reading is not of type string.");
+            if (values.Any(v => !v.Key.IsVaildSensorName())) 
+            {
+                string bad_sensors = values.Where(v => !v.Key.IsVaildSensorName())
+                    .Select(v => v.Key + ":" + v.Value).Aggregate((a, b) => { return a + " " + b + ","; });
+                throw new ArgumentException("Device reading has bad sensor names. {0}", bad_sensors);
+            }
+
+            if (values.Any(v => v.Key.ToSensorType() != v.Value.GetType().UnderlyingSystemType))
+            {
+                string bad_sensors = values.Where(v => v.Key.ToSensorType() != 
+                    v.Value.GetType().UnderlyingSystemType)
+                   .Select(v => v.Key + ":" + v.Value).Aggregate((a, b) => { return a + " " + b +","; });
+                throw new ArgumentException(string.Format("Device reading has bad sensor values: {0}", 
+                    bad_sensors));
+            }
+                
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
-            IStorageDevice device = this.FindDevice();
-            if (!device.Sensors.Keys.Contains(sensor_name)) throw new
-                ArgumentException(string.Format("Sensor {0} not found on device.", sensor_name));
-            IStorageSensorReading reading = new IStorageSensorReading()
+            IStorageDevice device = this.GetCurrentDevice();
+            IStorageDeviceReading reading = new IStorageDeviceReading()
             {
                 DeviceId = device.Id,
-                SensorName = sensor_name,
                 Time = time,
-                Reading = val
-            };
-            
+                SensorValues = values
+            };            
             TableOperation insert_operation = TableOperation
                 .InsertOrMerge(AzureStorage.CreateSensorReadingEntity(reading));
             TableResult result;
             try
             {
                 result = this.SensorReadingsTable.Execute(insert_operation);
-                    Log.WriteTableSuccess(string.Format
-                       ("Added sensor reading entity: Sensor Name: {0}, Partition: {1}, RowKey: {2}, " +
-                        "Type: {3}, Value: {4} ", reading.SensorName, reading.Time.GeneratePartitionKey(), 
-                         string.Format(CultureInfo.InvariantCulture, SensorReadingKeyFormat,
-                             reading.DeviceId.ToUrn() + ":", reading.SensorName),                            
-                             reading.SensorName.ToSensorType().ToString(), reading.Reading));
                 reading.ETag = result.Etag;
+                
+                Log.WriteTableSuccess(string.Format
+                    ("Added device reading entity: Partition: {0}, RowKey: {1}, Sensor values: {2}",                       
+                       reading.Time.GeneratePartitionKey(),
+                       string.Format(CultureInfo.InvariantCulture, DeviceReadingKeyFormat,
+                             reading.DeviceId, reading.Time.GetTicks()),
+                       reading.SensorValues                    
+                           .Select(v => v.Key + ":" + v.Value)
+                           .Aggregate((a, b) => { return a + "," + b + " "; })));
+                
                 return reading;                
             }
             catch (Exception e)
             {
                 Log.WriteTableFailure(string.Format
-                   ("Failed to add sensor reading entity: Sensor Name: {0}, Partition: {1}, RowKey: {2}, " +
-                        "Type: {3}, Value: {4} ", reading.SensorName, reading.Time.GeneratePartitionKey(), 
-                         string.Format(CultureInfo.InvariantCulture, SensorReadingKeyFormat,
-                             reading.DeviceId.ToUrn(),
-                             reading.SensorName,
-                             reading.Time.GetTicks()), 
-                             reading.SensorName.ToSensorType().ToString() , 
-                             reading.Reading), e);
+                    ("Added device reading entity: Partition: {0}, RowKey: {1}, {2}",
+                       reading.Time.GeneratePartitionKey(),
+                       string.Format(CultureInfo.InvariantCulture, DeviceReadingKeyFormat,
+                           reading.DeviceId, reading.Time.GetTicks()),
+                       reading.SensorValues
+                           .Select(v => v.Key + ":" + v.Value)
+                           .Aggregate((a, b) => { return a + "," + b + " "; })), e);
                 throw;
             }
             finally
             {
-                OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddSensorReading);
+                OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddDeviceReading);
             }
+        }
+
+        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device)]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
+            Operation = StorageAction.GetDeviceReading)]
+        public SortedList<IStorageDeviceReading, IComparer<DateTime>> GetSensorReadings(string name, DateTime start, DateTime end)
+        {
+            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
+            IStorageDevice device = this.GetCurrentDevice();
+            DateTime start_minute =  start.AddMinutes(-1D);
+            DateTime end_minute = start.AddMinutes(-1D);
+            string start_pk = new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0)
+            .GeneratePartitionKey();
+            string end_pk = new DateTime(end.Year, end.Month, end.Day, end.Hour, end.Minute, 0)
+            .GeneratePartitionKey();
+            //TableOperation retrieve_operation = TableOperation
+            //    .Retrieve<IStorageSensorReading>(start_pk, )
+            //TimeSpan range = end - start;
+            //range.
+            return new SortedList<IStorageDeviceReading, IComparer<DateTime>> ();
         }
     }        
 }

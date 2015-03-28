@@ -8,16 +8,14 @@ using System.Threading.Tasks;
 
 namespace Overlord.Storage
 {
-    public class IStorageSensorReading
+    public class IStorageDeviceReading
     {
         #region Public properties
-        public Guid DeviceId { get; set; }
-        public string SensorName;
+        public Guid DeviceId { get; set; }        
         public DateTime Time { get; set; }
         public string ETag { get; set; }
-        public object Reading { get; set; }
+        public IDictionary<string, object> SensorValues { get; set; }
         #endregion
-
     }
 
 

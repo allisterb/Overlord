@@ -19,7 +19,7 @@ namespace Overlord.Storage
         IStorageDevice AddDevice(IStorageUser user, string name, string token, GeoIp location, 
             string id = null);
         IStorageDevice FindDevice(Guid id, string token);
-        IStorageDevice FindDevice(); //Find the device associated with the current device indentity.
+        IStorageDevice GetCurrentDevice(); //Find the device associated with the current device indentity.
         IStorageDevice UpdateDevice(IStorageDevice device);
 
         IStorageSensor AddSensor(string sensor_name, string sensor_units,

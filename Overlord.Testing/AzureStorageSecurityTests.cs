@@ -112,8 +112,12 @@ namespace Overlord.Testing
         public void CanAuthorizeAddSensorReading()
         {
             AzureStorage storage = new AzureStorage();
+            Dictionary<string, object> sensor_values = new Dictionary<string, object>() 
+            {
+                {TestData.sensor_02_name, TestData.sensor_01_reading_01} 
+            };
             Assert.Throws(typeof(SecurityException), () => storage
-                .AddSensorReading("S1", DateTime.Now, DateTime.Now));
+                .AddDeviceReading(DateTime.Now, sensor_values));
         }
 
     }

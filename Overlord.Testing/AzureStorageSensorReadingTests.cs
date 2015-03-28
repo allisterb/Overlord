@@ -13,19 +13,24 @@ using Overlord.Storage;
 
 namespace Overlord.Testing
 {
-    public class AzureStorageSensorReadingTests
+    public class AzureStorageDeviceReadingTests
     {      
         [Fact]
         public void CanParseSensorReadingType()
         {
             Assert.True("S1".ToSensorType() == typeof(string));
-            Assert.True(TestData.sensor_01_reading_01.GetType() == "S1".ToSensorType());
-            Assert.False(TestData.sensor_03_reading_01.GetType() == "S1".ToSensorType());
+            Assert.True(TestData.sensor_01_reading_01.GetType() == 
+                TestData.sensor_01_name.ToSensorType());
+            Assert.False(TestData.sensor_03_reading_01.GetType() == TestData.sensor_01_name.ToSensorType());
+            Assert.True(TestData.sensor_02_reading_01.GetType() ==
+                TestData.sensor_02_name.ToSensorType());
+            Assert.False(TestData.sensor_03_reading_01.GetType() == TestData.sensor_02_name.ToSensorType());
+
                        
         }
         
         [Fact]
-        public void CanAddSensorReading()
+        public void CanAddDeviceReading()
         {
             OverlordIdentity.InitializeAnonymousIdentity();
             AzureStorage storage = new AzureStorage();            
@@ -33,8 +38,12 @@ namespace Overlord.Testing
                 TestData.device_01_token);            
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddSensor);
             storage.AddSensor(TestData.sensor_01_name, TestData.sensor_01_unit, null, null);
-            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddSensorReading);
-            storage.AddSensorReading(TestData.sensor_01_name, DateTime.Now, TestData.sensor_01_reading_01);
+            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDeviceReading);
+            Dictionary<string, object> sensor_values = new Dictionary<string,object>() 
+            {
+                {TestData.sensor_01_name, TestData.sensor_01_reading_01} 
+            };
+            storage.AddDeviceReading(DateTime.Now, sensor_values);            
         }
     }
 }

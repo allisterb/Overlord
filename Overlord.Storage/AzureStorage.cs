@@ -54,7 +54,7 @@ namespace Overlord.Storage
             event_log_listener.EnableEvents(Log, EventLevel.LogAlways,
               AzureStorageEventSource.Keywords.Perf | AzureStorageEventSource.Keywords.Diagnostic);
             var formatter = new EventTextFormatter() { VerbosityThreshold = EventLevel.Error };
-            event_log_listener.LogToConsole(formatter);
+            event_log_listener.LogToFlatFile("AzureStorageLog.txt", formatter, true);
             this.UserEntityResolverFunc = (string partitionKey, string rowKey, DateTimeOffset timestamp, 
                 IDictionary<string, EntityProperty> properties, string etag) =>
                 {
@@ -562,8 +562,7 @@ namespace Overlord.Storage
                 user.ETag = result.Etag;
                 Log.WriteTableSuccess(string.
                     Format("Added device entity: {0}, Id: {1}, Token {2} to Devices table.", 
-                        device.Name, device.Id.ToUrn(), device.Token));
-                
+                        device.Name, device.Id.ToUrn(), device.Token));                
                 Log.WriteTableSuccess(string.Format("Added device entity: {0}, Id: {1}, to User entity {2}.", 
                     device.Name, device.Id.ToUrn(), device.Token, user.Id.ToUrn()));
                 return device;
@@ -613,7 +612,7 @@ namespace Overlord.Storage
 
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
             Operation = StorageAction.FindDevice)]
-        public IStorageDevice FindDevice()
+        public IStorageDevice GetCurrentDevice()
         {
             IStorageDevice device = this.FindDevice(OverlordIdentity.CurrentDeviceId.ToGuid(), 
                 OverlordIdentity.CurrentDeviceToken);
@@ -653,7 +652,7 @@ namespace Overlord.Storage
             if (!sensor_name.IsVaildSensorName()) throw new ArgumentException(
                 string.Format("Invalid sensor name: {0}", sensor_name));
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
-            IStorageDevice device = this.FindDevice();            
+            IStorageDevice device = this.GetCurrentDevice();            
             IStorageSensor sensor = new IStorageSensor()
             {
                 DeviceId  = device.Id,
@@ -695,7 +694,7 @@ namespace Overlord.Storage
             string channel_units)        
         {
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
-            IStorageDevice device = this.FindDevice();
+            IStorageDevice device = this.GetCurrentDevice();
 
             IStorageChannel channel = new IStorageChannel()
             {
