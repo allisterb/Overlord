@@ -31,10 +31,16 @@ namespace Overlord.Storage
 {
     public partial class AzureStorage
     {
-        private const string DeviceReadingKeyFormat = "{0}_{1:X5}";        
+        private const string DeviceReadingKeyFormat = "{0}_{1:X5}";      
+  
+        public async Task CreateDigestQueueMessageAsync(IStorageDeviceReading reading)
+        {
+            await this.DigestQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(reading)));
+        }
+
         public static DynamicTableEntity CreateSensorReadingEntity(IStorageDeviceReading reading)
         {
-            Dictionary<string, EntityProperty> dictionary = new Dictionary<string, EntityProperty>();
+            Dictionary<string, EntityProperty> dictionary = new Dictionary<string, EntityProperty>();            
             foreach (KeyValuePair<string, object> r in reading.SensorValues)
             {
                 if (r.Key.ToSensorType() == typeof(string))
@@ -107,8 +113,7 @@ namespace Overlord.Storage
             try
             {
                 result = this.SensorReadingsTable.Execute(insert_operation);
-                reading.ETag = result.Etag;
-                
+                reading.ETag = result.Etag;                
                 Log.WriteTableSuccess(string.Format
                     ("Added device reading entity: Partition: {0}, RowKey: {1}, Sensor values: {2}",                       
                        reading.Time.GeneratePartitionKey(),
@@ -116,9 +121,7 @@ namespace Overlord.Storage
                              reading.DeviceId, reading.Time.GetTicks()),
                        reading.SensorValues                    
                            .Select(v => v.Key + ":" + v.Value)
-                           .Aggregate((a, b) => { return a + "," + b + " "; })));
-                
-                return reading;                
+                           .Aggregate((a, b) => { return a + "," + b + " "; })));                                 
             }
             catch (Exception e)
             {
@@ -135,6 +138,39 @@ namespace Overlord.Storage
             finally
             {
                 OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddDeviceReading);
+            }
+            
+            try 
+            {
+                IStorageDigestMessage message = new IStorageDigestMessage()
+                {
+                    Device = device,
+                    Time = time,
+                    SensorValues = reading.SensorValues,
+                    ETag = reading.ETag
+                };
+                this.DigestQueue.AddMessage(new CloudQueueMessage(JsonConvert.SerializeObject(message)));
+                Log.WriteQueueSuccess(string.Format
+                     ("Added digest message for device reading entity: Partition: {0}, RowKey: {1}, Sensor values: {2}",
+                        reading.Time.GeneratePartitionKey(),
+                        string.Format(CultureInfo.InvariantCulture, DeviceReadingKeyFormat,
+                              reading.DeviceId, reading.Time.GetTicks()),
+                        reading.SensorValues
+                            .Select(v => v.Key + ":" + v.Value)
+                            .Aggregate((a, b) => { return a + "," + b + " "; })));
+                return reading;
+            }
+            catch (Exception e)
+            {
+                Log.WriteQueueFailure(string.Format
+                    ("Failed to add digest message for device reading entity: Partition: {0}, RowKey: {1}, {2}",
+                       reading.Time.GeneratePartitionKey(),
+                       string.Format(CultureInfo.InvariantCulture, DeviceReadingKeyFormat,
+                           reading.DeviceId, reading.Time.GetTicks()),
+                       reading.SensorValues
+                           .Select(v => v.Key + ":" + v.Value)
+                           .Aggregate((a, b) => { return a + "," + b + " "; })), e);
+                throw;
             }
         }
 

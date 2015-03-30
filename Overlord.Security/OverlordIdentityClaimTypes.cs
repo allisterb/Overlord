@@ -9,7 +9,9 @@ namespace Overlord.Security.ClaimTypes
     public class Resource
     {
         public const string Storage = "urn:Overlord/Identity/Claims/Storage";
+        public const string Api = "urn:Overlord/Identity/Claims/Api";
     }
+
     public class Authentication
     {
         public const string Role = "urn:Overlord/Identity/Claims/Roles";

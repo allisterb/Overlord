@@ -87,12 +87,43 @@ namespace Overlord.Testing
             return new String(stringChars);
         }
         
-        public static DateTime GenerateRandomTime(int? year, int? month, int? day )
+        public static DateTime GenerateRandomTime(int? year, int? month, int? day, int? hour)
         {
             int y = year.HasValue ? year.Value : DateTime.Now.Year;
             int m = month.HasValue ? month.Value : DateTime.Now.Month;
             int d = day.HasValue ? day.Value : DateTime.Now.Day;
-            return new DateTime(y, m, d, rng.Next(24), rng.Next(60), rng.Next(60));
+            int h = hour.HasValue ? hour.Value : rng.Next(24);            
+            return new DateTime(y, m, d, h, rng.Next(60), rng.Next(60));
+        }
+
+                
+        public static IDictionary<string, object> GenerateRandomSensorData(int num_sensors)
+        {
+            string[] sensors = { "S", "I", "N", "L", "D", "B" };
+            IDictionary<string, object> sensor_values = new Dictionary<string, object>();
+            for (int i = 1; i <= num_sensors; i++)
+            {
+                string sensor_name = sensors[rng.Next(0, 5)] + rng.Next(num_sensors).ToString();
+                if (sensor_values.Keys.Contains(sensor_name)) continue;
+                if (sensor_name.ToSensorType() == typeof(string))
+                    sensor_values.Add(new KeyValuePair<string, object>(sensor_name, GenerateRandomString(20)));
+                else if (sensor_name.ToSensorType() == typeof(DateTime))
+                    sensor_values.Add(new KeyValuePair<string, object>(sensor_name, GenerateRandomTime(null, null, 
+                        null, null)));
+                else if (sensor_name.ToSensorType() == typeof(int))
+                    sensor_values.Add(new KeyValuePair<string, object>(sensor_name, rng.Next(5, 1000)));
+                else if (sensor_name.ToSensorType() == typeof(double))
+                    sensor_values.Add(new KeyValuePair<string, object>(sensor_name, rng.NextDouble()));
+                else if (sensor_name.ToSensorType() == typeof(bool))
+                    sensor_values.Add(new KeyValuePair<string, object>(sensor_name, rng.NextDouble() > 0.5));
+                else
+                {
+                    byte[] b = new byte[100];
+                    rng.NextBytes(b);
+                    sensor_values.Add(new KeyValuePair<string, object>(sensor_name, b));
+                }
+            }
+            return sensor_values;
         }
     }
 }

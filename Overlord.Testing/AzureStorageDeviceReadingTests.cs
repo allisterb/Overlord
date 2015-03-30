@@ -34,16 +34,18 @@ namespace Overlord.Testing
             OverlordIdentity.InitializeAnonymousIdentity();
             AzureStorage storage = new AzureStorage();            
             storage.AuthenticateAnonymousDevice(TestData.device_01_id.UrnToId(), 
-                TestData.device_01_token);            
-            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddSensor);
-            storage.AddSensor(TestData.sensor_01_name, TestData.sensor_01_unit, null, null);
-            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDeviceReading);
-            Dictionary<string, object> sensor_values = new Dictionary<string,object>() 
+                TestData.device_01_token);
+            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
+            IStorageDevice device = storage.GetCurrentDevice();
+            IDictionary<string, object> sensor_values = TestData.GenerateRandomSensorData(10);
+            foreach (KeyValuePair<string, object> s in sensor_values)
             {
-                {TestData.sensor_01_name, TestData.GenerateRandomString(43)},
-                {TestData.sensor_03_name, TestData.GenerateRandomTime(null, null, null)}
-            };
-            storage.AddDeviceReading(DateTime.Now, sensor_values);            
-        }        
+                OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddSensor);
+                storage.AddSensor(s.Key, "CanAddDeviceReading_Test", null, null);                
+            }
+            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDeviceReading);
+            storage.AddDeviceReading(DateTime.Now, sensor_values);                                    
+        }
+        
     }
 }

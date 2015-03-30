@@ -10,7 +10,7 @@ using Microsoft.Practices.EnterpriseLibrary.SemanticLogging.Formatters;
 
 namespace Overlord.Core
 {
-    [EventSource(Name = "API")]
+    [EventSource(Name = "CoreAPI")]
     public class ApiEventSource : EventSource 
     {
         public class Keywords
@@ -27,6 +27,7 @@ namespace Overlord.Core
           public const EventTask Configure = (EventTask)1;
           public const EventTask Connect = (EventTask)2;
           public const EventTask AddDevice = (EventTask)4;
+          public const EventTask AddDeviceReading = (EventTask)8;
         }
 
 
@@ -78,6 +79,20 @@ namespace Overlord.Core
             this.WriteEvent(6, message);
         }
 
+        [Event(7, Message = "FAILURE: Add Device Reading: {0}\nException: {1}", Task = Tasks.AddDeviceReading, Level = EventLevel.Error,
+            Keywords = Keywords.Diagnostic | Keywords.Device)]
+        internal void AddDeviceReadingFailure(string message, string exception)
+        {
+            this.WriteEvent(7, message, exception);
+        }
+
+        [Event(8, Message = "SUCCESS: Add Device Reading: {0}", Task = Tasks.AddDeviceReading, Level = EventLevel.Informational,
+            Keywords = Keywords.Diagnostic | Keywords.Device)]
+        internal void AddDeviceReadingSuccess(string message)
+        {
+            this.WriteEvent(8, message);
+        }
+
     }
 
     public static class ApiEventExtensions
@@ -96,6 +111,12 @@ namespace Overlord.Core
         {
             ev.AddDeviceFailure(message, e.ToString());
         }
+
+        public static void AddDeviceReadingFailure(this ApiEventSource ev, string message, Exception e)
+        {
+            ev.AddDeviceReadingFailure(message, e.ToString());
+        }
+
 
     }
 

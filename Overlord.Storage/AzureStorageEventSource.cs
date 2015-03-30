@@ -20,7 +20,8 @@ namespace Overlord.Storage
           public const EventKeywords Configuration = (EventKeywords)1;
           public const EventKeywords Diagnostic = (EventKeywords)2;
           public const EventKeywords Perf = (EventKeywords)4;
-          public const EventKeywords Table = (EventKeywords)8;          
+          public const EventKeywords Table = (EventKeywords)8;
+          public const EventKeywords Queue = (EventKeywords)16;
         }
  
         public class Tasks
@@ -28,7 +29,8 @@ namespace Overlord.Storage
           public const EventTask Configure = (EventTask)1;
           public const EventTask Connect = (EventTask)2;
           public const EventTask WriteTable = (EventTask)4;
-          public const EventTask ReadTable = (EventTask)8;          
+          public const EventTask ReadTable = (EventTask)8;
+          public const EventTask WriteQueue = (EventTask)16;
         }
 
         private static AzureStorageEventSource _log = new AzureStorageEventSource();
@@ -81,8 +83,8 @@ namespace Overlord.Storage
             this.WriteEvent(6, message);
         }
 
-        [Event(7, Message = "FAILURE: Read Azure Table Storage: {0}\nException: {1}", Task = Tasks.ReadTable, Level = EventLevel.Error,
-            Keywords = Keywords.Diagnostic | Keywords.Table)]
+        [Event(7, Message = "FAILURE: Read Azure Table Storage: {0}\nException: {1}", Task = Tasks.ReadTable, 
+            Level = EventLevel.Error, Keywords = Keywords.Diagnostic | Keywords.Table)]
         internal void ReadTableFailure(string message, string exception)
         {
             this.WriteEvent(7, message, exception);
@@ -96,6 +98,20 @@ namespace Overlord.Storage
             this.WriteEvent(8, message);
         }
 
+        [Event(9, Message = "FAILURE: Write Azure Queue Storage: {0}\nException: {1}", Task = Tasks.WriteQueue, 
+            Level = EventLevel.Error, Keywords = Keywords.Diagnostic | Keywords.Queue)]
+        internal void WriteQueueFailure(string message, string exception)
+        {
+            this.WriteEvent(9, message, exception);
+        }
+
+        [Event(10, Message = "SUCCESS: Write Azure Queue Storage: {0}", Task = Tasks.WriteQueue, 
+            Level = EventLevel.Informational, Keywords = Keywords.Diagnostic | Keywords.Queue)]
+        internal void WriteQueueSuccess(string message)
+        {
+            this.WriteEvent(10, message);
+        }
+        
     }
 
     public static class AzureStorageEventExtensions
@@ -120,7 +136,10 @@ namespace Overlord.Storage
             ev.ReadTableFailure(message, e.ToString());
         }
 
-
+        public static void WriteQueueFailure(this AzureStorageEventSource ev, string message, Exception e)
+        {
+            ev.WriteQueueFailure(message, e.ToString());
+        }
 
     }
 

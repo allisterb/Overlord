@@ -30,8 +30,8 @@ namespace Overlord.Storage
         public static string GeneratePartitionKeyReversed(this DateTime dateTime)
         {
             dateTime = dateTime.AddMinutes(-1D);
-            var pk = new DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, 0);
-
+            var pk = new
+                DateTime(dateTime.Year, dateTime.Month, dateTime.Day, dateTime.Hour, dateTime.Minute, 0)                ;
             return GetTicksReversed(pk);
         }
 

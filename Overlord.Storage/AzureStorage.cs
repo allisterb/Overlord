@@ -27,14 +27,14 @@ using Overlord.Security.ClaimTypes;
 using Overlord.Security.Claims;
 using Overlord.Storage.Common;
 
+
+
 namespace Overlord.Storage
 {
     public partial class AzureStorage: IStorage
     {        
-        #region Private fields
-        ObservableEventListener event_log_listener = new ObservableEventListener();
-        private AzureStorageEventSource Log = AzureStorageEventSource.Log;
-        
+        #region Private fields        
+        private AzureStorageEventSource Log = AzureStorageEventSource.Log;        
         private CloudStorageAccount _StorageAccount;        
         private CloudTableClient _TableClient;
         private CloudQueueClient _QueueClient;
@@ -45,16 +45,13 @@ namespace Overlord.Storage
         private CloudTable _ChannelsTable;
         private CloudTable _AlertsTable;
         private CloudTable _MessagesTable;
-        private CloudQueue _ReadingsQueue;
+        private CloudQueue _DigestQueue;
         #endregion
 
         #region Constructors
         public AzureStorage()
         {            
-            event_log_listener.EnableEvents(Log, EventLevel.LogAlways,
-              AzureStorageEventSource.Keywords.Perf | AzureStorageEventSource.Keywords.Diagnostic);
-            var formatter = new EventTextFormatter() { VerbosityThreshold = EventLevel.Error };
-            event_log_listener.LogToFlatFile("AzureStorageLog.txt", formatter, true);
+            
             this.UserEntityResolverFunc = (string partitionKey, string rowKey, DateTimeOffset timestamp, 
                 IDictionary<string, EntityProperty> properties, string etag) =>
                 {
@@ -65,8 +62,17 @@ namespace Overlord.Storage
                 {
                     return DeviceEntityResolver(partitionKey, rowKey, timestamp, properties, etag);
                 };
+            
  
+        }       
+        #endregion
+
+        #region Destructors
+        ~AzureStorage()
+        {
+         
         }
+        
         #endregion
 
         #region Private properties
@@ -305,28 +311,28 @@ namespace Overlord.Storage
             }
         }
 
-        private CloudQueue ReadingsQueue
+        private CloudQueue DigestQueue
         {
             get
             {
-                if (this._ReadingsQueue == null)
+                if (this._DigestQueue == null)
                 {
                     try
                     {
-                        this._ReadingsQueue = this.QueueClient.GetQueueReference("Readings");
-                        this._ReadingsQueue.CreateIfNotExists();
+                        this._DigestQueue = this.QueueClient.GetQueueReference("digest");
+                        this._DigestQueue.CreateIfNotExists();
                     }
                     catch (StorageException e)
                     {
-                        Log.ConnectFailure("Failed to connect to Readings queue.", e);
+                        Log.ConnectFailure("Failed to connect to Digest queue.", e);
                         throw;
                     }
                 }
-                return this._ReadingsQueue;
+                return this._DigestQueue;
             }
             set
             {
-                this._ReadingsQueue = value;
+                this._DigestQueue = value;
             }
         }        
         #endregion

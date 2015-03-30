@@ -47,6 +47,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\EnterpriseLibrary.SemanticLogging.2.0.1406.1\lib\net45\Microsoft.Practices.EnterpriseLibrary.SemanticLogging.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Practices.EnterpriseLibrary.SemanticLogging.TextFile, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\EnterpriseLibrary.SemanticLogging.TextFile.2.0.1406.1\lib\net45\Microsoft.Practices.EnterpriseLibrary.SemanticLogging.TextFile.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
@@ -79,7 +83,7 @@
     <Compile Include="ApiTests.cs" />
     <Compile Include="AzureStorageDeviceTests.cs" />
     <Compile Include="AzureStorageEventSourceTests.cs" />
-    <Compile Include="AzureStorageSensorReadingTests.cs" />
+    <Compile Include="AzureStorageDeviceReadingTests.cs" />
     <Compile Include="AzureStorageSensorTests.cs" />
     <Compile Include="TestData.cs" />
     <Compile Include="AzureStorageUserTests.cs" />
@@ -96,6 +100,10 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Overlord.Core\Overlord.Core.csproj">
+      <Project>{08f5af53-5a1d-4498-86f6-8d86c693011b}</Project>
+      <Name>Overlord.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Overlord.Security\Overlord.Security.csproj">
       <Project>{230b3558-078d-4821-b686-0f4455a477a0}</Project>
       <Name>Overlord.Security</Name>

@@ -21,25 +21,43 @@ namespace Overlord.Security.Claims
 
     public class StorageAction
     {
-        public const string AddUser = "urn:Overlord/Identity/Claims/User/Create";
-        public const string UpdateUser = "urn:Overlord/Identity/Claims/User/Update";
-        public const string FindUser = "urn:Overlord/Identity/User/Device/Retrieve";
-        public const string DeleteUser = "urn:Overlord/Identity/User/Device/Delete"; 
+        public const string AddUser = "urn:Overlord/Identity/Claims/Storage/User/Create";
+        public const string UpdateUser = "urn:Overlord/Identity/Claims/Storage/User/Update";
+        public const string FindUser = "urn:Overlord/Identity/Claims/StorageUser/Device/Retrieve";
+        public const string DeleteUser = "urn:Overlord/Identity/Claims/Storage/User/Device/Delete"; 
      
-        public const string AddDevice = "urn:Overlord/Identity/Claims/Device/Create";
-        public const string UpdateDevice = "urn:Overlord/Identity/Claims/Device/Update";
-        public const string FindDevice = "urn:Overlord/Identity/Claims/Device/Retrieve";
-        public const string DeleteDevice = "urn:Overlord/Identity/Claims/Device/Delete";
+        public const string AddDevice = "urn:Overlord/Identity/Claims/Storage/Device/Create";
+        public const string UpdateDevice = "urn:Overlord/Identity/Claims/Storage/Device/Update";
+        public const string FindDevice = "urn:Overlord/Identity/Claims/Storage/Device/Retrieve";
+        public const string DeleteDevice = "urn:Overlord/Identity/Claims/Storage/Device/Delete";
 
-        public const string AddSensor = "urn:Overlord/Identity/Claims/Sensor/Create";
+        public const string AddSensor = "urn:Overlord/Identity/Claims/Storage/Sensor/Create";
 
-        public const string AddDeviceReading = "urn:Overlord/Identity/Claims/DeviceReading/Create";
-        public const string GetDeviceReading = "urn:Overlord/Identity/Claims/DeviceReading/Retrieve";
+        public const string AddDeviceReading = "urn:Overlord/Identity/Claims/Storage/DeviceReading/Create";
+        public const string GetDeviceReading = "urn:Overlord/Identity/Claims/Storage/DeviceReading/Retrieve";
 
-        public const string AddChannel = "urn:Overlord/Identity/Claims/Channel/Create";
+        public const string AddChannel = "urn:Overlord/Identity/Claims/Storage/Channel/Create";
 
-        public const string AddMessage = "urn:Overlord/Identity/Claims/Channel/Create";
+        public const string AddMessage = "urn:Overlord/Identity/Claims/Storage/Channel/Create";
 
-        public const string AddAlert = "urn:Overlord/Identity/Claims/Channel/Create";
+        public const string AddAlert = "urn:Overlord/Identity/Claims/Storage/Channel/Create";
+    }
+
+    public class ApiAction
+    {
+        public const string AuthenticateUser = "urn:Overlord/Identity/Claims/Api/User/Authenticate";
+        public const string AuthenticateDevice = "urn:Overlord/Identity/Claims/Api/Device/Authenticate";
+
+        public const string AddUser = "urn:Overlord/Identity/Claims/Api/User/Create";
+        public const string UpdateUser = "urn:Overlord/Identity/Claims/Api/User/Update";
+        public const string FindUser = "urn:Overlord/Identity/Claims/Api/User/Retrieve";
+        public const string DeleteUser = "urn:Overlord/Identity/Claims/Api/User/Delete"; 
+             
+        public const string AddDevice = "urn:Overlord/Identity/Claims/Api/Device/Create";        
+        public const string UpdateDevice = "urn:Overlord/Identity/Claims/Api/Device/Update";
+        public const string FindDevice = "urn:Overlord/Identity/Claims/Api/Device/Retrieve";
+        public const string DeleteDevice = "urn:Overlord/Identity/Claims/Api/Device/Delete";
+
+        public const string AddReading = "urn:Overlord/Identity/Claims/Api/Reading/Create";
     }
 }
