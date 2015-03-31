@@ -55,7 +55,8 @@ namespace Overlord.Testing
                 foreach (string s in sensor_values[d].Keys)
                 {
                     IStorageSensor sensor = new IStorageSensor()
-                    {
+                    {                        
+                        DeviceId = devices[d].Id,
                         Name = s,
                         Channels = new List<Guid>()
                     };

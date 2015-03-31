@@ -59,13 +59,16 @@ namespace Overlord.Storage
                 {
                     return UserEntityResolver(partitionKey, rowKey, timestamp, properties, etag);
                 };
-            DeviceEntityResolverFunc = (string partitionKey, string rowKey,
+            this.DeviceEntityResolverFunc = (string partitionKey, string rowKey,
                 DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) =>
                 {
                     return DeviceEntityResolver(partitionKey, rowKey, timestamp, properties, etag);
                 };
-            
- 
+            this.ChannelEntityResolverFunc = (string partitionKey, string rowKey,
+                DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag) =>
+            {
+                return ChannelEntityResolver(partitionKey, rowKey, timestamp, properties, etag);
+            };             
         }       
         #endregion
 
@@ -767,7 +770,6 @@ namespace Overlord.Storage
                 (properties["Devices"].StringValue);
             return user;
         }
-
         internal EntityResolver<IStorageUser> UserEntityResolverFunc;
 
         internal IStorageDevice DeviceEntityResolver(string partitionKey, string rowKey,
@@ -787,8 +789,23 @@ namespace Overlord.Storage
                 JsonConvert.DeserializeObject<Common.GeoIp>(properties["Location"].StringValue) : null;            
             return device;
         }
-
         internal EntityResolver<IStorageDevice> DeviceEntityResolverFunc;
+
+        internal IStorageChannel ChannelEntityResolver(string partitionKey, string rowKey,
+        DateTimeOffset timestamp, IDictionary<string, EntityProperty> properties, string etag)
+        {
+            IStorageChannel channel = new IStorageChannel();
+            channel.Id = Guid.ParseExact(partitionKey, "D");
+            channel.ETag = etag;
+            channel.Name = properties["Name"].StringValue;
+            channel.SensorType = properties["SensorType"].StringValue;
+            channel.Description = properties.Keys.Contains("Description") ?
+                properties["Description"].StringValue : null;
+            channel.Alerts = properties.Keys.Contains("Alerts") ?
+                JsonConvert.DeserializeObject<IList<IStorageAlert>>(properties["Alerts"].StringValue) : null;
+            return channel;
+        }
+        internal EntityResolver<IStorageChannel> ChannelEntityResolverFunc;
         #endregion
     
         #region Internal static methods
@@ -809,66 +826,21 @@ namespace Overlord.Storage
             dictionary.Add("Description", new EntityProperty(device.Description));
             dictionary.Add("Location", new EntityProperty(JsonConvert.SerializeObject(device.Location)));
             string sensors_json = JsonConvert.SerializeObject(device.Sensors);
-            dictionary.Add("Sensors", new EntityProperty(sensors_json));
-            /*
-            if (device.Sensors != null && device.Sensors.Count > 0)
-            {
-                IDictionary<string, string> sensors = new Dictionary<string, string>();                
-                foreach (KeyValuePair<string, IStorageSensor> sensor in device.Sensors)
-                {
-                    string Id = sensor.Value.;
-                    if (type == typeof(byte[]))
-                    {
-                        string json = JsonConvert.SerializeObject((byte[])sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    }
-                    if (type == typeof(bool))
-                    {
-                        string json = JsonConvert.SerializeObject((bool)sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    }
-
-                    if (type == typeof(DateTime))
-                    {
-                        string json = JsonConvert.SerializeObject((DateTime)sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    }
-                    if (type == typeof(long))
-                    {
-                        string json = JsonConvert.SerializeObject((long)sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    }
-                    if (type == typeof(double))
-                    {
-                        string json = JsonConvert.SerializeObject((double)sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    } 
-
-                    if (type == typeof(string))
-                    {
-                        string json = JsonConvert.SerializeObject((string) sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    } 
-                    else if (type == typeof(int))
-                    {
-                        string json = JsonConvert.SerializeObject((int)sensor.Value);
-                        dictionary.Add(string.Format(CultureInfo.InvariantCulture, "Sensor_{0}", sensor.Key), new EntityProperty(json));
-                    }
-                }                
-                 */ 
-            //}
+            dictionary.Add("Sensors", new EntityProperty(sensors_json));            
             return new DynamicTableEntity(device.Id.ToUrn(), device.Token, device.ETag, dictionary);
         }
 
         internal static DynamicTableEntity CreateChannelTableEntity(IStorageChannel channel)
         {
             var dictionary = new Dictionary<string, EntityProperty>();
+            dictionary.Add("SensorType", new EntityProperty(channel.SensorType));
             dictionary.Add("Name", new EntityProperty(channel.Name));
-            dictionary.Add("Description", new EntityProperty(JsonConvert.
-                SerializeObject(channel.Description)));            
+            dictionary.Add("Description", new EntityProperty(channel.Description));
+            dictionary.Add("Alerts", new EntityProperty(JsonConvert.SerializeObject(channel.Alerts)));                
             return new DynamicTableEntity(channel.Id.ToUrn(), channel.Id.ToUrn(), channel.ETag,
                 dictionary);
         }
+
         #endregion
     }
 

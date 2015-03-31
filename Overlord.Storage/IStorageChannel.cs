@@ -13,6 +13,6 @@ namespace Overlord.Storage
         public string Name { get; set; }
         public string Description { get; set; }
         public string SensorType { get; set; }
-        public List<IStorageAlert> Alerts { get; set; }
+        public IList<IStorageAlert> Alerts { get; set; }
     }
 }
