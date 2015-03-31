@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
@@ -20,8 +21,9 @@ namespace Overlord.Digest
             public const EventKeywords Configuration = (EventKeywords)1;
             public const EventKeywords Diagnostic = (EventKeywords)2;
             public const EventKeywords Perf = (EventKeywords)4;
-            public const EventKeywords Table = (EventKeywords)8;
+            public const EventKeywords Parallel = (EventKeywords)8;
             public const EventKeywords Queue = (EventKeywords)16;
+            public const EventKeywords Table = (EventKeywords)32;
         }
 
         public class Tasks
@@ -31,6 +33,7 @@ namespace Overlord.Digest
             public const EventTask WriteTable = (EventTask)4;
             public const EventTask ReadTable = (EventTask)8;
             public const EventTask ReadQueue = (EventTask)16;
+            public const EventTask Partition = (EventTask)16;
         }
 
         private static AzureDigestEventSource _log = new AzureDigestEventSource();
@@ -112,6 +115,15 @@ namespace Overlord.Digest
         {
             this.WriteEvent(10, message);
         }
+
+        [Event(12, Message = "PARTITION: Executing on thread: {0}",
+            Task = Tasks.Partition, Level = EventLevel.Informational,
+            Keywords = Keywords.Diagnostic | Keywords.Parallel)]
+        internal void Partition()
+        {
+            this.WriteEvent(10, Thread.CurrentThread.Name);
+        }
+
 
     }
 

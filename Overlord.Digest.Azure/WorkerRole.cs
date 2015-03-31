@@ -20,6 +20,8 @@ using Microsoft.WindowsAzure.ServiceRuntime;
 using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
 using Microsoft.Practices.EnterpriseLibrary.SemanticLogging.Formatters;
 
+using Newtonsoft.Json;
+
 using Overlord.Security;
 using Overlord.Security.ClaimTypes;
 using Overlord.Security.Claims;
@@ -34,7 +36,9 @@ namespace Overlord.Digest.Azure
         #region Private fields
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         private readonly ManualResetEvent runCompleteEvent = new ManualResetEvent(false);
-        private ObservableEventListener event_log_listener = new ObservableEventListener();
+        private JsonSerializerSettings jss = new JsonSerializerSettings();
+        private ObservableEventListener digest_event_log_listener = new ObservableEventListener();
+        private ObservableEventListener storage_event_log_listener = new ObservableEventListener();
         private AzureDigestEventSource Log = AzureDigestEventSource.Log;
         #endregion
 
@@ -57,14 +61,15 @@ namespace Overlord.Digest.Azure
 
         public override bool OnStart()
         {
-            event_log_listener.EnableEvents(Log, EventLevel.LogAlways,
+            digest_event_log_listener.EnableEvents(Log, EventLevel.LogAlways,
               AzureDigestEventSource.Keywords.Perf | AzureDigestEventSource.Keywords.Diagnostic);
             EventTextFormatter formatter = new EventTextFormatter() { VerbosityThreshold = EventLevel.Error };
-            event_log_listener.LogToFlatFile("Overlord.Digest.Azure.log", formatter, true);
-
-
-      
+            digest_event_log_listener.LogToFlatFile("Overlord.Digest.Azure.log", formatter, true);            
+            storage_event_log_listener.EnableEvents(AzureStorageEventSource.Log, EventLevel.LogAlways,
+                AzureStorageEventSource.Keywords.Perf | AzureStorageEventSource.Keywords.Diagnostic);
+            storage_event_log_listener.LogToFlatFile("Overlord.Storage.Azure.log", formatter, true);          
             // Set the maximum number of concurrent connections
+            jss.Converters.Add(new GuidConverter());
             ServicePointManager.DefaultConnectionLimit = 12;
 
             // For information on handling configuration changes
@@ -80,9 +85,11 @@ namespace Overlord.Digest.Azure
         public override void OnStop()
         {
             Trace.TraceInformation("Overlord.Digest.Azure is stopping");
-
+            digest_event_log_listener.DisableEvents(AzureDigestEventSource.Log);
+            storage_event_log_listener.DisableEvents(AzureStorageEventSource.Log);
             this.cancellationTokenSource.Cancel();
             this.runCompleteEvent.WaitOne();
+            
 
             base.OnStop();
 
@@ -96,17 +103,25 @@ namespace Overlord.Digest.Azure
             {
                 Trace.TraceInformation("Working");
                 AzureStorage storage = new AzureStorage();
-                IEnumerable<CloudQueueMessage> messages = await storage.GetDigestMessages(cancellationToken);
-
-                //CloudQueueMessage message = await storage..GetMessageAsync(token);
-                //if (message != null)
-                //{
-                //    IDigestQueueMessage message = JsonConvert.DeserializeObject<IDigestQueueMessage>(message);
-                //    await _repository.CreateAsync(fixit);
-                //    await queue.DeleteMessageAsync(message);
-             }
-                await Task.Delay(1000);
-           
+                IEnumerable<CloudQueueMessage> queue_messages = storage.GetDigestMessages(32);
+                if (queue_messages != null)
+                {
+                    IEnumerable<IStorageDeviceReading> messages =
+                        queue_messages.Select((q) => JsonConvert
+                            .DeserializeObject<IStorageDeviceReading>(q.AsString, jss)).OrderBy( m => m.Time);
+                    IEnumerable<IGrouping<string, IStorageDeviceReading>> message_groups = messages                        
+                        .GroupBy(m => m.DeviceId.ToUrn());                                                
+                    Parallel.ForEach(message_groups, message_group =>
+                    {
+                        Log.Partition();
+                        foreach (IStorageDeviceReading m in message_group.OrderBy(mg => mg.Time))
+                        {
+                            storage.IngestSensorValues(m);
+                        }
+                    });                                        
+                }
+                await Task.Delay(1000);              
+             }             
         }
     }
     

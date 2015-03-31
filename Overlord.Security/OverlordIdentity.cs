@@ -142,8 +142,33 @@ namespace Overlord.Security
             }
         }
 
+        public static string CurrentUserId
+        {
+            get
+            {
+                ClaimsIdentity userIdentity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
+                Claim user_id = userIdentity.Claims.FirstOrDefault(c =>
+                    c.Type == ClaimTypes.Authentication.UserId);
+                if (user_id == null) throw new
+                    InvalidOperationException("Could not retrieve user id claim from identity.");
+                else return user_id.Value;
+            }
 
-        
+        }
+
+        public static string CurrentUserToken
+        {
+            get
+            {
+                ClaimsIdentity userIdentity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;
+                Claim user_token = userIdentity.Claims.FirstOrDefault(c =>
+                    c.Type == ClaimTypes.Authentication.UserToken);
+                if (user_token == null) throw new
+                    InvalidOperationException("Could not retrieve user token claim from identity.");
+                else return user_token.Value;
+            }
+        }
+                    
         public static bool IsInRole(string role)
         {
             ClaimsPrincipal claimsPrincipal = (ClaimsPrincipal)Thread.CurrentPrincipal;

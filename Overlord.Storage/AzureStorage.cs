@@ -46,12 +46,14 @@ namespace Overlord.Storage
         private CloudTable _AlertsTable;
         private CloudTable _MessagesTable;
         private CloudQueue _DigestQueue;
+
+        JsonSerializerSettings jss = new JsonSerializerSettings();
         #endregion
 
         #region Constructors
         public AzureStorage()
-        {            
-            
+        {
+            this.jss.Converters.Add(new GuidConverter());
             this.UserEntityResolverFunc = (string partitionKey, string rowKey, DateTimeOffset timestamp, 
                 IDictionary<string, EntityProperty> properties, string etag) =>
                 {
@@ -217,13 +219,13 @@ namespace Overlord.Storage
                     {
                         this._DeviceChannelTable = this.TableClient
                             .GetTableReference("Channel_" + 
-                                OverlordIdentity.CurrentDeviceId.IdToTableName());
+                                OverlordIdentity.CurrentDeviceId.DeviceIdToTableName());
                         this._DeviceChannelTable.CreateIfNotExists();
                     }
                     catch (StorageException e)
                     {
                         Log.ConnectFailure("Failed to connect to " + 
-                            "Channel_" + OverlordIdentity.CurrentDeviceId.IdToTableName() +
+                            "Channel_" + OverlordIdentity.CurrentDeviceId.DeviceIdToTableName() +
                         "device channel table.", e);
                         throw;
                     }
@@ -491,6 +493,15 @@ namespace Overlord.Storage
 
         }
 
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage,
+            Operation = StorageAction.FindUser)]
+        public IStorageUser GetCurrentUser()
+        {
+            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindUser);
+            return this.FindUser(OverlordIdentity.CurrentUserId.UrnToGuid(), OverlordIdentity.CurrentUserToken);
+        }
+
+
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
             Operation = StorageAction.UpdateUser)]
         public IStorageUser UpdateUser(IStorageUser user)
@@ -584,6 +595,15 @@ namespace Overlord.Storage
             {
                 OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddDevice);
             }
+        }
+
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage,
+            Operation = StorageAction.AddDevice)]
+        public IStorageDevice AddDevice(string name, string token, GeoIp location,
+            string id = null)
+        {
+            IStorageUser user = this.GetCurrentUser();
+            return this.AddDevice(user, name, token, location);
         }
 
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 

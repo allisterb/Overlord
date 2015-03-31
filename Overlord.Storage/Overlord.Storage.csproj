@@ -87,6 +87,7 @@
   <ItemGroup>
     <Compile Include="AzureStorage.cs" />
     <Compile Include="AzureStorageEventSource.cs" />
+    <Compile Include="AzureStorageIngestSensorValues.cs" />
     <Compile Include="AzureStorageQueue.cs" />
     <Compile Include="AzureStorageReadingEntity.cs" />
     <Compile Include="AzureStorageDeviceReading.cs" />
@@ -95,6 +96,7 @@
     <Compile Include="DateTimeExtensions.cs" />
     <Compile Include="DeviceReadingStorage.cs" />
     <Compile Include="DeviceStorage.cs" />
+    <Compile Include="GuidConverter.cs" />
     <Compile Include="GuidExtensions.cs" />
     <Compile Include="IStorageDigestMessage.cs" />
     <Compile Include="IListExtensions.cs" />
@@ -111,6 +113,7 @@
     <Compile Include="CloudTableExtensions.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

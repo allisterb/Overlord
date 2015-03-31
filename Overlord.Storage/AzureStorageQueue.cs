@@ -32,7 +32,13 @@ namespace Overlord.Storage
 {
     public partial class AzureStorage
     {
-        public async Task<IEnumerable<CloudQueueMessage>> GetDigestMessages(CancellationToken token)
+        public IEnumerable<CloudQueueMessage> GetDigestMessages(int m)
+        {
+            return this.DigestQueue.GetMessages(m);
+
+        }
+
+        public async Task<IEnumerable<CloudQueueMessage>> GetDigestMessagesAsync(CancellationToken token)
         {
             return await this.DigestQueue.GetMessagesAsync(32, token);
 

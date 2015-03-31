@@ -96,6 +96,10 @@ namespace Overlord.Testing
             return new DateTime(y, m, d, h, rng.Next(60), rng.Next(60));
         }
 
+        public static int GenerateRandomInteger(int min, int max)
+        {
+            return TestData.rng.Next(min, max);
+        }
                 
         public static IDictionary<string, object> GenerateRandomSensorData(int num_sensors)
         {
@@ -121,6 +125,34 @@ namespace Overlord.Testing
                     byte[] b = new byte[100];
                     rng.NextBytes(b);
                     sensor_values.Add(new KeyValuePair<string, object>(sensor_name, b));
+                }
+            }
+            return sensor_values;
+        }
+
+        public static IDictionary<string, object> GenerateRandomSensorData(IDictionary<string, object> 
+            incoming_sensor_values)
+        {
+            string[] sensors = { "S", "I", "N", "L", "D", "B" };
+            IDictionary<string, object> sensor_values = new Dictionary<string, object>();
+            foreach (KeyValuePair<string, object> sv in incoming_sensor_values)
+            {                
+                if (sv.Key.ToSensorType() == typeof(string))
+                    sensor_values.Add(sv.Key, GenerateRandomString(20));
+                else if (sv.Key.ToSensorType() == typeof(DateTime))
+                    sensor_values.Add(new KeyValuePair<string, object>(sv.Key, GenerateRandomTime(null, null,
+                        null, null)));
+                else if (sv.Key.ToSensorType() == typeof(int))
+                    sensor_values.Add(new KeyValuePair<string, object>(sv.Key, rng.Next(5, 1000)));
+                else if (sv.Key.ToSensorType() == typeof(double))
+                    sensor_values.Add(new KeyValuePair<string, object>(sv.Key, rng.NextDouble()));
+                else if (sv.Key.ToSensorType() == typeof(bool))
+                    sensor_values.Add(new KeyValuePair<string, object>(sv.Key, rng.NextDouble() > 0.5));
+                else
+                {
+                    byte[] b = new byte[100];
+                    rng.NextBytes(b);
+                    sensor_values.Add(new KeyValuePair<string, object>(sv.Key, b));
                 }
             }
             return sensor_values;

@@ -31,14 +31,15 @@ namespace Overlord.Storage
 {
     public partial class AzureStorage
     {
-        private const string DeviceReadingKeyFormat = "{0}_{1:X5}";      
+        private const string DeviceReadingKeyFormat = "{0}_{1:X5}";
+        private const string DigestReadingKeyFormat = "(0}";
   
         public async Task CreateDigestQueueMessageAsync(IStorageDeviceReading reading)
         {
             await this.DigestQueue.AddMessageAsync(new CloudQueueMessage(JsonConvert.SerializeObject(reading)));
         }
 
-        public static DynamicTableEntity CreateSensorReadingEntity(IStorageDeviceReading reading)
+        public static DynamicTableEntity CreateDeviceReadingEntity(IStorageDeviceReading reading)
         {
             Dictionary<string, EntityProperty> dictionary = new Dictionary<string, EntityProperty>();            
             foreach (KeyValuePair<string, object> r in reading.SensorValues)
@@ -78,12 +79,12 @@ namespace Overlord.Storage
                 string.Format(CultureInfo.InvariantCulture, DeviceReadingKeyFormat, reading.DeviceId.ToUrn(),
                     reading.Time.GetTicks()), null, dictionary);                        
         }
-
+       
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device)]
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
             Operation = StorageAction.AddDeviceReading)]
         public IStorageDeviceReading AddDeviceReading(DateTime time, IDictionary<string, object> values)
-        {
+        {                        
             if (values.Any(v => !v.Key.IsVaildSensorName())) 
             {
                 string bad_sensors = values.Where(v => !v.Key.IsVaildSensorName())
@@ -108,7 +109,7 @@ namespace Overlord.Storage
                 SensorValues = values
             };            
             TableOperation insert_operation = TableOperation
-                .InsertOrMerge(AzureStorage.CreateSensorReadingEntity(reading));
+                .InsertOrMerge(AzureStorage.CreateDeviceReadingEntity(reading));
             TableResult result;
             try
             {
@@ -149,7 +150,7 @@ namespace Overlord.Storage
                     SensorValues = reading.SensorValues,
                     ETag = reading.ETag
                 };
-                this.DigestQueue.AddMessage(new CloudQueueMessage(JsonConvert.SerializeObject(message)));
+                this.DigestQueue.AddMessage(new CloudQueueMessage(JsonConvert.SerializeObject(reading, this.jss)));
                 Log.WriteQueueSuccess(string.Format
                      ("Added digest message for device reading entity: Partition: {0}, RowKey: {1}, Sensor values: {2}",
                         reading.Time.GeneratePartitionKey(),

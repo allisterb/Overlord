@@ -11,6 +11,11 @@ namespace Overlord.Storage
         public static string ToUrn(this Guid guid)
         {
             return guid.ToString("D");
-        }        
+        }
+
+        public static string ToTableName(this Guid guid)
+        {
+            return "DeviceX" + guid.ToString("D").Replace("-", "X");
+        }
     }
 }

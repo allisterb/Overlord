@@ -22,7 +22,7 @@ namespace Overlord.Storage
             }
         }
 
-        public static string IdToTableName(this string s)
+        public static string DeviceIdToTableName(this string s)
         {
             return s.Replace("-", "_");
         }

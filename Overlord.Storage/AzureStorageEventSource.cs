@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
@@ -22,6 +23,7 @@ namespace Overlord.Storage
           public const EventKeywords Perf = (EventKeywords)4;
           public const EventKeywords Table = (EventKeywords)8;
           public const EventKeywords Queue = (EventKeywords)16;
+          public const EventKeywords Parallel = (EventKeywords)32;
         }
  
         public class Tasks
@@ -31,6 +33,7 @@ namespace Overlord.Storage
           public const EventTask WriteTable = (EventTask)4;
           public const EventTask ReadTable = (EventTask)8;
           public const EventTask WriteQueue = (EventTask)16;
+          public const EventTask Partition = (EventTask)16;
         }
 
         private static AzureStorageEventSource _log = new AzureStorageEventSource();
@@ -111,6 +114,14 @@ namespace Overlord.Storage
         {
             this.WriteEvent(10, message);
         }
+
+        [Event(11, Message = "PARTITION: Executing on managed thread id: {0}",
+            Task = Tasks.Partition, Level = EventLevel.Informational,
+            Keywords = Keywords.Diagnostic | Keywords.Parallel)]
+        internal void Partition(string message)
+        {
+            this.WriteEvent(11, message);
+        }
         
     }
 
@@ -139,6 +150,11 @@ namespace Overlord.Storage
         public static void WriteQueueFailure(this AzureStorageEventSource ev, string message, Exception e)
         {
             ev.WriteQueueFailure(message, e.ToString());
+        }
+
+        public static void Partition(this AzureStorageEventSource ev)
+        {
+            ev.Partition(Thread.CurrentThread.ManagedThreadId.ToString());
         }
 
     }
