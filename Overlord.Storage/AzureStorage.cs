@@ -673,7 +673,7 @@ namespace Overlord.Storage
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
             Operation = StorageAction.AddSensor)]
         public IStorageSensor AddSensor(string sensor_name, string sensor_units, 
-            IList<Guid> sensor_channels, IList<Guid> sensor_alerts)
+            IList<Guid> sensor_channels, IList<IStorageAlert> sensor_alerts)
         {
             if (!sensor_name.IsVaildSensorName()) throw new ArgumentException(
                 string.Format("Invalid sensor name: {0}", sensor_name));
@@ -717,7 +717,7 @@ namespace Overlord.Storage
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage,
             Operation = StorageAction.AddChannel)]
         public IStorageChannel AddChannel(string channel_name, string channel_description, 
-            string channel_units)        
+            string sensor_type, string channel_units, List<IStorageAlert> alerts)        
         {
             OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
             IStorageDevice device = this.GetCurrentDevice();
@@ -726,7 +726,9 @@ namespace Overlord.Storage
             {
                 Id = Guid.NewGuid(),                                
                 Name = channel_name,
-                Description = channel_description,                                
+                Description = channel_description,  
+                SensorType = sensor_type,
+                Alerts = alerts              
             };
             try
             {
@@ -734,10 +736,9 @@ namespace Overlord.Storage
                     .Insert(AzureStorage.CreateChannelTableEntity(channel));
                 TableResult result;                                
                 result = this.ChannelsTable.Execute(insert_channel_operation);                
-                Log.WriteTableSuccess(string.Format("Added channel entity: {0}, Id: {1}.",
+                Log.WriteTableSuccess(string.Format("Added Channel entity: {0}, Id: {1}.",
                     channel.Name, channel.Id.ToUrn()));
                 return channel;
-
             }
             catch (Exception e)
             {
@@ -748,9 +749,7 @@ namespace Overlord.Storage
             {
                 OverlordIdentity.DeleteClaim(Resource.Storage, StorageAction.AddChannel);
             }
-        }
-     
-       
+        }           
         #endregion
 
         #region Internal methods

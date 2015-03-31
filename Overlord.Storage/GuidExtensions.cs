@@ -13,9 +13,15 @@ namespace Overlord.Storage
             return guid.ToString("D");
         }
 
-        public static string ToTableName(this Guid guid)
+        public static string ToDeviceChannelTableName(this Guid guid)
         {
             return "DeviceX" + guid.ToString("D").Replace("-", "X");
         }
+
+        public static string ToChannelTableName(this Guid guid)
+        {
+            return "ChannelX" + guid.ToString("D").Replace("-", "X");
+        }
+
     }
 }

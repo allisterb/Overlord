@@ -150,7 +150,7 @@ namespace Overlord.Storage
                     SensorValues = reading.SensorValues,
                     ETag = reading.ETag
                 };
-                this.DigestQueue.AddMessage(new CloudQueueMessage(JsonConvert.SerializeObject(reading, this.jss)));
+                this.DigestQueue.AddMessage(new CloudQueueMessage(JsonConvert.SerializeObject(message, this.jss)));
                 Log.WriteQueueSuccess(string.Format
                      ("Added digest message for device reading entity: Partition: {0}, RowKey: {1}, Sensor values: {2}",
                         reading.Time.GeneratePartitionKey(),

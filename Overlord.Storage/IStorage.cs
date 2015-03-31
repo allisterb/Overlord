@@ -23,9 +23,9 @@ namespace Overlord.Storage
         IStorageDevice UpdateDevice(IStorageDevice device);
 
         IStorageSensor AddSensor(string sensor_name, string sensor_units,
-            IList<Guid> sensor_channels, IList<Guid> sensor_alerts);
+            IList<Guid> sensor_channels, IList<IStorageAlert> sensor_alerts);
 
-        IStorageChannel AddChannel(string channel_name, string channel_description,
-            string channel_units);
+        IStorageChannel AddChannel(string channel_name, string channel_description, 
+            string sensor_type, string channel_units, List<IStorageAlert> alerts);
     }
 }

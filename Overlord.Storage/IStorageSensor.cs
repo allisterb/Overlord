@@ -13,7 +13,7 @@ namespace Overlord.Storage
         public string Name { get; set; }        
         public string Unit { get; set; }
         public IList<Guid> Channels { get; set; }
-        public IList<Guid> Alerts { get; set; }            
+        public IList<IStorageAlert> Alerts { get; set; }            
     }
     
 }
