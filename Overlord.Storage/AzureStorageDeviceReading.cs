@@ -79,11 +79,21 @@ namespace Overlord.Storage
                 string.Format(CultureInfo.InvariantCulture, DeviceReadingKeyFormat, reading.DeviceId.ToUrn(),
                     reading.Time.GetTicks()), null, dictionary);                        
         }
-       
+
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device)]
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
             Operation = StorageAction.AddDeviceReading)]
         public IStorageDeviceReading AddDeviceReading(DateTime time, IDictionary<string, object> values)
+        {
+            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
+            IStorageDevice device = this.GetCurrentDevice();
+            return this.AddDeviceReading(device, time, values);
+        }
+       
+        [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device)]
+        [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 
+            Operation = StorageAction.AddDeviceReading)]
+        public IStorageDeviceReading AddDeviceReading(IStorageDevice device, DateTime time, IDictionary<string, object> values)
         {                        
             if (values.Any(v => !v.Key.IsVaildSensorName())) 
             {
@@ -99,9 +109,7 @@ namespace Overlord.Storage
                    .Select(v => v.Key + ":" + v.Value).Aggregate((a, b) => { return a + " " + b +","; });
                 throw new ArgumentException(string.Format("Device reading has bad sensor values: {0}", 
                     bad_sensors));
-            }                
-            OverlordIdentity.AddClaim(Resource.Storage, StorageAction.FindDevice);
-            IStorageDevice device = this.GetCurrentDevice();
+            }                            
             IStorageDeviceReading reading = new IStorageDeviceReading()
             {
                 DeviceId = device.Id,

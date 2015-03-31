@@ -516,7 +516,7 @@ namespace Overlord.Storage
             }
             catch (Exception e)
             {
-                Log.WriteTableFailure(string.Format("Failed to updated user entity: Id: {1}, Token: {2}.",
+                Log.WriteTableFailure(string.Format("Failed to updated user entity: Id: {0}, Token: {1}.",
                     user.Id.ToUrn(), user.Token), e);
                 throw;
             }
@@ -541,7 +541,7 @@ namespace Overlord.Storage
             }
             catch (Exception e)
             {
-                Log.WriteTableFailure(string.Format("Failed to delete user entity: Id: {1}, Token: {2}.",
+                Log.WriteTableFailure(string.Format("Failed to delete user entity: Id: {0}, Token: {1}.",
                     user.Id.ToUrn(), user.Token), e);
                 throw;
             }
@@ -655,11 +655,12 @@ namespace Overlord.Storage
                 TableResult result = this.DevicesTable.Execute(update_device_operation);
                 Log.WriteTableSuccess(string.Format("Updated device entity: {0}, Id: {1}, Token: {2}",
                     device.Name, device.Id.ToUrn(), device.Token, device.Id.ToUrn()));
+                device.ETag = result.Etag;
                 return device;
             }
             catch (Exception e)
             {
-                Log.WriteTableFailure(string.Format("Failed to update device entity: Id: {1}, Token: {2}.",
+                Log.WriteTableFailure(string.Format("Failed to update device entity: Id: {0}, Token: {1}.",
                     device.Id.ToUrn(), device.Token), e);
                 throw;
             }
@@ -742,7 +743,8 @@ namespace Overlord.Storage
             }
             catch (Exception e)
             {
-                Log.WriteTableFailure(string.Format("Failed to add Channel entity: {0}, Id: {1}.", channel.Name, channel.Id), e);
+                Log.WriteTableFailure(string.Format("Failed to add Channel entity: {0}, Id: {1}.", channel.Name, 
+                    channel.Id), e);
                 throw;
             }
             finally

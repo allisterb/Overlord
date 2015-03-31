@@ -23,9 +23,9 @@ namespace Overlord.Security.Claims
     {
         public const string AddUser = "urn:Overlord/Identity/Claims/Storage/User/Create";
         public const string UpdateUser = "urn:Overlord/Identity/Claims/Storage/User/Update";
-        public const string FindUser = "urn:Overlord/Identity/Claims/StorageUser/Device/Retrieve";
-        public const string DeleteUser = "urn:Overlord/Identity/Claims/Storage/User/Device/Delete"; 
-     
+        public const string FindUser = "urn:Overlord/Identity/Claims/Storage/User/Retrieve";
+        public const string DeleteUser = "urn:Overlord/Identity/Claims/User/Delete";
+
         public const string AddDevice = "urn:Overlord/Identity/Claims/Storage/Device/Create";
         public const string UpdateDevice = "urn:Overlord/Identity/Claims/Storage/Device/Update";
         public const string FindDevice = "urn:Overlord/Identity/Claims/Storage/Device/Retrieve";

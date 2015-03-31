@@ -8,6 +8,7 @@ namespace Overlord.Storage
 {
     public class IStorageAlert
     {
+        public string SensorType { get; set; }
         public string StringValue { get; set; }
         public bool LogicalFlag { get; set; }
         public int IntMaxValue { get; set; }

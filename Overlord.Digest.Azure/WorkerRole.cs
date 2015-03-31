@@ -103,6 +103,8 @@ namespace Overlord.Digest.Azure
             {
                 Trace.TraceInformation("Working");
                 AzureStorage storage = new AzureStorage();
+                storage.IngestSensorValues();
+                /*
                 IEnumerable<CloudQueueMessage> queue_messages = storage.GetDigestMessages(32);
                 if (queue_messages != null)
                 {
@@ -120,6 +122,7 @@ namespace Overlord.Digest.Azure
                         }
                     });                                        
                 }
+                **/
                 await Task.Delay(1000);              
              }             
         }
