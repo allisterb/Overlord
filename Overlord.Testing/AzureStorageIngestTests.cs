@@ -74,28 +74,28 @@ namespace Overlord.Testing
             }
              OverlordIdentity.InitializeAnonymousIdentity();
              storage.AuthenticateAnonymousDevice(devices[0].Id.ToUrn(), devices[0].Token);
-            Parallel.For(0, devices.Count, d =>
-            {
-                Log.Partition();                
-                OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDeviceReading);
-                storage.AddDeviceReading(devices[d], TestData.GenerateRandomTime(null, null, null, null),
-                        sensor_values[d]);
-                //Sleep for a random interval
-                Thread.Sleep(TestData.GenerateRandomInteger(0, 1000));
+             for (int d = 0; d < devices.Count(); d++)
+             {
+                 //Log.Partition();                
+                 OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDeviceReading);
+                 storage.AddDeviceReading(devices[d], TestData.GenerateRandomTime(null, null, null, null),
+                         sensor_values[d]);
+                 //Sleep for a random interval
+                 Thread.Sleep(TestData.GenerateRandomInteger(0, 1000));
 
-                //Add another set of sensor data
-                OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDeviceReading);
-                storage.AddDeviceReading(devices[d], TestData.GenerateRandomTime(null, null, null, null),
-                        TestData.GenerateRandomSensorData(sensor_values[d]));
+                 //Add another set of sensor data
+                 OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDeviceReading);
+                 storage.AddDeviceReading(devices[d], TestData.GenerateRandomTime(null, null, null, null),
+                         TestData.GenerateRandomSensorData(sensor_values[d]));
 
-                //Sleep for a random interval
-                Thread.Sleep(TestData.GenerateRandomInteger(0, 1000));
+                 //Sleep for a random interval
+                 Thread.Sleep(TestData.GenerateRandomInteger(0, 1000));
 
-                //Add another set of sensor data
-                OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDeviceReading);
-                storage.AddDeviceReading(devices[d], TestData.GenerateRandomTime(null, null, null, null),
-                        TestData.GenerateRandomSensorData(sensor_values[d]));
-            });
+                 //Add another set of sensor data
+                 OverlordIdentity.AddClaim(Resource.Storage, StorageAction.AddDeviceReading);
+                 storage.AddDeviceReading(devices[d], TestData.GenerateRandomTime(null, null, null, null),
+                         TestData.GenerateRandomSensorData(sensor_values[d]));
+             }
         }
 
         private IList<IStorageChannel> CreateSensorChannels()

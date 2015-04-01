@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Globalization;
 using System.Diagnostics.Tracing;
 using System.Linq;
@@ -115,13 +116,22 @@ namespace Overlord.Storage
                         .DeserializeObject<IStorageDigestMessage>(q.AsString, jss)).OrderBy(m => m.Time);
                 IEnumerable<IGrouping<string, IStorageDigestMessage>> message_groups = messages
                     .GroupBy(m => m.Device.Id.ToUrn());
+                ConcurrentDictionary<IStorageDigestMessage, Exception> IngestErrors = new
+                    ConcurrentDictionary<IStorageDigestMessage, Exception>();
                 Parallel.ForEach(message_groups, message_group =>
                 {
                     Log.Partition();
+                    Dictionary<Guid, Exception> IngestGroupErrors = new Dictionary<Guid, Exception>(message_group.Count());
                     foreach (IStorageDigestMessage m in message_group.OrderBy(mg => mg.Time))
-                    {                        
-                        this.IngestSensorValues(m);
-                        
+                    {
+                        try
+                        {
+                            this.IngestSensorValues(m);
+                        }
+                        catch (Exception e)
+                        {
+                            IngestErrors.TryAdd(m, e);
+                        }
                     }
                 });
             }
@@ -144,8 +154,20 @@ namespace Overlord.Storage
                         .InsertOrMerge(AzureStorage.CreateChannelItemEntity(message.Time, sv.Key, sv.Value));
                     CloudTable channel = this.TableClient.GetTableReference(c.ToChannelTableName());
                     channel.CreateIfNotExists();
-                    TableResult channel_insert_result = device_channel.Execute(channel_insert_operation);
+                    TableResult channel_insert_result = channel.Execute(channel_insert_operation);                    
                 });
+                /*
+                foreach (IStorageAlert a in sensor.Alerts)
+                {
+                    if (sensor.Name.ToSensorType() == typeof(int))
+                    {
+                        int v = (int)sv.Value;
+                        if (a.IntMinValue < v < a.IntMaxValue)
+                        {
+
+                        }
+                    }
+                }*/
             });            
         }
     }

@@ -14,7 +14,7 @@ using Overlord.Storage;
 
 namespace Overlord.Testing
 {
-    public class SecurityTests
+    public class AzureStorageSecurityTests
     {
                 
         [Fact]
