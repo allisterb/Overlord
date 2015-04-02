@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Entity;
-using System.Data.Entity.Infrastructure;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -20,6 +18,8 @@ namespace Overlord.Http.Filters
 {
     public class OverlordAuthenticateAttribute : Attribute, IAuthenticationFilter
     {
+        //public static HttpEventSource Log = HttpEventSource.Log;
+
         public string Realm { get; set; }        
 
         public async Task AuthenticateAsync(HttpAuthenticationContext context, CancellationToken cancellationToken)
@@ -76,13 +76,15 @@ namespace Overlord.Http.Filters
             Tuple<string, string, IList<string>> result = await Api.AuthenticateDeviceAsync(userName, password);
             if (result == null)
             {
+                //Log.AuthenticateDevice(userName, password, false);
                 context.ErrorResult = new AuthenticationFailureResult("Bad credentials.", context.Request);
                 return;
             }                        
             else
             {
                 context.Principal = OverlordIdentity.InitializeDevicePrincipal(result.Item1, 
-                    result.Item2, result.Item3);                    
+                    result.Item2, result.Item3);
+                //Log.AuthenticateDevice(userName, password, true);
                 return;
             }            
                                   

@@ -9,7 +9,7 @@ using Microsoft.Practices.EnterpriseLibrary.SemanticLogging.Formatters;
 
 using Overlord.Core;
 
-namespace Overlord.Http.App_Start
+namespace Overlord.Http
 {
     public class LogConfig
     {
@@ -19,7 +19,7 @@ namespace Overlord.Http.App_Start
             ObservableEventListener http_event_log_listener = new ObservableEventListener();
             http_event_log_listener.EnableEvents(HttpEventSource.Log, EventLevel.LogAlways,
                 HttpEventSource.Keywords.Perf | HttpEventSource.Keywords.Diagnostic);
-            
+            http_event_log_listener.LogToFlatFile("Overlord.Http.log", formatter, true);
         }
     }
 }

@@ -11,9 +11,9 @@ using Microsoft.Practices.EnterpriseLibrary.SemanticLogging;
 using Microsoft.Practices.EnterpriseLibrary.SemanticLogging.Formatters;
 
 namespace Overlord.Http
-{
+{                  
     public class WebApiApplication : System.Web.HttpApplication
-    {
+    {        
         protected void Application_Start()
         {
             AreaRegistration.RegisterAllAreas();
@@ -21,6 +21,7 @@ namespace Overlord.Http
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
+            LogConfig.Configure();
         }
     }
 }
