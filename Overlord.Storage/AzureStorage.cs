@@ -422,8 +422,33 @@ namespace Overlord.Storage
                 throw;
             }            
         }
-
-
+        
+        public async Task<IStorageDevice> AuthenticateAnonymousDeviceAsync(string device_id, string device_token)
+        {
+            TableOperation retrieveOperation = TableOperation.Retrieve<DynamicTableEntity>(device_id,
+                device_token);
+            try
+            {                
+                TableResult result = await this.DevicesTable.ExecuteAsync(retrieveOperation);
+                DynamicTableEntity device_entity = (DynamicTableEntity)result.Result;
+                if (device_entity == null)
+                {
+                    return null;
+                }
+                else
+                {
+                    return this.DeviceEntityResolver(device_entity.PartitionKey,
+                        device_entity.RowKey, device_entity.Timestamp, device_entity.Properties,
+                        device_entity.ETag);                                        
+                }
+            }
+            catch (Exception e)
+            {
+                Log.ReadTableFailure(string.Format
+                    ("Failed to retrieve device entity: Id: {0}, Token: {1}.", device_id, device_token), e);
+                throw;
+            }
+        }
      
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Administrator)]
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Storage, 

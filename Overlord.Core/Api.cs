@@ -30,9 +30,9 @@ namespace Overlord.Core
         private static ApiEventSource Log = ApiEventSource.Log;        
         #endregion
 
+        #region Constructor
         static Api()
         {
-            OverlordIdentity.InitializeAnonymousIdentity();
             var formatter = new EventTextFormatter() { VerbosityThreshold = EventLevel.Error };
             ObservableEventListener api_event_log_listener = new ObservableEventListener();
             api_event_log_listener.EnableEvents(ApiEventSource.Log, EventLevel.LogAlways,
@@ -43,6 +43,24 @@ namespace Overlord.Core
                 AzureStorageEventSource.Keywords.Perf | AzureStorageEventSource.Keywords.Diagnostic);
             storage_event_log_listener.LogToFlatFile("Overlord.Storage.Azure.log", formatter, true);                        
         }
+        #endregion
+
+        
+        public static async Task<Tuple<string, string, IList<string>>> AuthenticateDeviceAsync(string id, string token)
+        {            
+            AzureStorage storage = new AzureStorage();
+            IStorageDevice device = await storage.AuthenticateAnonymousDeviceAsync(id.UrnToId(), token);
+            if (device == null)
+            {
+                return null;
+            }            
+            else
+            {                
+                return new Tuple<string, string, IList<string>>(device.Id.ToUrn(),
+                    device.Token, device.Sensors.Select(s => s.Key).ToList());                                                
+            }
+               
+        }
 
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Anonymous)]        
         public static bool AuthenticateDevice(string id, string token)
@@ -50,7 +68,8 @@ namespace Overlord.Core
             AzureStorage storage = new AzureStorage();            
             return storage.AuthenticateAnonymousDevice(id.UrnToId(), token);            
         }
-                
+
+                        
         [PrincipalPermission(SecurityAction.Demand, Role = UserRole.Device)]
         [ClaimsPrincipalPermission(SecurityAction.Demand, Resource = Resource.Api,
             Operation = ApiAction.AddReading)]

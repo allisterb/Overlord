@@ -28,6 +28,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\..\Users\Allister Beharry\Documents\app.config = ..\..\Users\Allister Beharry\Documents\app.config
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Overlord.Http", "Overlord.Http\Overlord.Http.csproj", "{FDE82BFC-0D0B-4317-863D-45FD390F28F1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Overlord.Http.Tests", "Overlord.Http.Tests\Overlord.Http.Tests.csproj", "{D1BF0894-7F69-42E9-AB11-366494F48799}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PublishScripts", "PublishScripts", "{22A3C383-E015-42ED-8D8E-4C156B0BFC98}"
+	ProjectSection(SolutionItems) = preProject
+		PublishScripts\AzureWebsitePublishModule.psm1 = PublishScripts\AzureWebsitePublishModule.psm1
+		PublishScripts\Publish-WebApplicationWebsite.ps1 = PublishScripts\Publish-WebApplicationWebsite.ps1
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configurations", "Configurations", "{825D2D0D-7A22-485A-8EEF-48B9A27C71B4}"
+	ProjectSection(SolutionItems) = preProject
+		PublishScripts\Configurations\OverlordHttp-WAWS-dev.json = PublishScripts\Configurations\OverlordHttp-WAWS-dev.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -58,8 +73,19 @@ Global
 		{7CB44C96-F809-49FF-9B53-0F80CF401C21}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7CB44C96-F809-49FF-9B53-0F80CF401C21}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7CB44C96-F809-49FF-9B53-0F80CF401C21}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDE82BFC-0D0B-4317-863D-45FD390F28F1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDE82BFC-0D0B-4317-863D-45FD390F28F1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDE82BFC-0D0B-4317-863D-45FD390F28F1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDE82BFC-0D0B-4317-863D-45FD390F28F1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1BF0894-7F69-42E9-AB11-366494F48799}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1BF0894-7F69-42E9-AB11-366494F48799}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1BF0894-7F69-42E9-AB11-366494F48799}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1BF0894-7F69-42E9-AB11-366494F48799}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{825D2D0D-7A22-485A-8EEF-48B9A27C71B4} = {22A3C383-E015-42ED-8D8E-4C156B0BFC98}
 	EndGlobalSection
 EndGlobal

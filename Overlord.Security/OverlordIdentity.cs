@@ -23,8 +23,35 @@ namespace Overlord.Security
             ClaimsPrincipal principal = new ClaimsPrincipal(new ClaimsIdentity(current_user_identity, null, current_user_identity.AuthenticationType,
                 ClaimsIdentity.DefaultNameClaimType, ClaimTypes.Authentication.Role));
             //Assign to our current thread principal
-            Thread.CurrentPrincipal = principal;
-            ClaimsIdentity new_user_identity = (ClaimsIdentity)Thread.CurrentPrincipal.Identity;                        
+            Thread.CurrentPrincipal = principal;            
+        }
+
+        public static ClaimsPrincipal InitializeDevicePrincipal(string id, string token, IList<string> sensors)
+        {
+            //Get the current user identity as a stock IIdentity
+            IIdentity current_user_identity = Thread.CurrentPrincipal.Identity;
+            ClaimsIdentity device_identity = new ClaimsIdentity(current_user_identity, null, 
+                current_user_identity.AuthenticationType, ClaimsIdentity.DefaultNameClaimType, 
+                ClaimTypes.Authentication.Role);
+            //Create a new ClaimsPrincipal using our stock identity                        
+            foreach (Claim c in device_identity.Claims.Where(c => c.Type == Authentication.Role 
+                || c.Type == Authentication.DeviceId || c.Type == Authentication.DeviceToken))
+            {
+                device_identity.RemoveClaim(c);
+            }
+            
+            List<Claim> claims = new List<Claim>()
+            {
+                new Claim(ClaimTypes.Authentication.Role, UserRole.Device),
+                new Claim(ClaimTypes.Authentication.DeviceId, id),
+                new Claim(ClaimTypes.Authentication.DeviceToken, token)                                                                    
+            };
+            foreach (string s in sensors)
+            {
+                claims.Add(new Claim(Authentication.DeviceSensor, s));
+            }
+            device_identity.AddClaims(claims);
+            return new ClaimsPrincipal(device_identity);
         }
         #endregion
 
@@ -115,7 +142,7 @@ namespace Overlord.Security
             }
             device_identity.AddClaims(claims);
         }
-
+        
         public static string CurrentDeviceId
         {
             get
